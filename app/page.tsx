@@ -79,5 +79,3 @@ export default function Home() {
         </div>
       </section>
     </main>
-  );
-}git remote -v
