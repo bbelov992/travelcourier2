@@ -77,6 +77,44 @@ export default function Home() {
             </button>
           </div>
         </div>
+
+        <div className="mt-4 rounded-[24px] bg-white/60 p-5 shadow-[0_15px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-2xl font-semibold">Berlin → London</div>
+              <div className="mt-2 text-black/45">Max · до 2 кг</div>
+            </div>
+
+            <button
+              className="rounded-xl px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_rgba(0,0,0,0.08)]"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(245,246,248,1) 0%, rgba(212,216,223,1) 100%)",
+              }}
+            >
+              Выбрать
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-[24px] bg-white/60 p-5 shadow-[0_15px_40px_rgba(0,0,0,0.08)] backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-2xl font-semibold">Berlin → Tallinn</div>
+              <div className="mt-2 text-black/45">Daria · до 5 кг</div>
+            </div>
+
+            <button
+              className="rounded-xl px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_rgba(0,0,0,0.08)]"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(245,246,248,1) 0%, rgba(212,216,223,1) 100%)",
+              }}
+            >
+              Выбрать
+            </button>
+          </div>
+        </div>
       </section>
     </main>
       );
