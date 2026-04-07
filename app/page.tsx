@@ -80,4 +80,4 @@ export default function Home() {
       </section>
     </main>
   );
-}
+}git remote -v
