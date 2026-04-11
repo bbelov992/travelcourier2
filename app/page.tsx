@@ -1,43 +1,63 @@
-export const dynamic = 'force-dynamic'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 
-export default async function Home() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  const { data: routes, error } = await supabase
-    .from('routes')
-    .select('*')
-
-  console.log("ROUTES:", routes)
-
-  if (error) {
-    return <div className="p-10">Ошибка загрузки данных</div>
-  }
+export default async function Page() {
+  const { data: routes } = await supabase.from('routes').select('*')
 
   return (
-    <main className="p-10">
-      <h1 className="text-4xl font-bold mb-6">
-        Доставка через путешественников
-      </h1>
+    <main className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <section className="bg-white py-20">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <h1 className="text-5xl font-bold mb-4">
+            Доставка через путешественников
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Быстро, безопасно и дешевле курьерских служб
+          </p>
+        </div>
+      </section>
 
-      <div className="space-y-4">
+      {/* Search */}
+      <section className="-mt-10">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 flex gap-4">
+            <input
+              placeholder="Откуда"
+              className="flex-1 border rounded-lg px-4 py-2"
+            />
+            <input
+              placeholder="Куда"
+              className="flex-1 border rounded-lg px-4 py-2"
+            />
+            <button className="bg-black text-white px-6 py-2 rounded-lg hover:opacity-90 transition">
+              Найти
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Routes */}
+      <section className="max-w-5xl mx-auto px-6 py-16 space-y-6">
         {routes?.map((route) => (
           <div
             key={route.id}
-            className="p-6 bg-white rounded-xl shadow"
+            className="bg-white rounded-2xl shadow-md p-8 flex justify-between items-center hover:shadow-xl transition"
           >
-            <div className="text-xl font-semibold">
-              {route.from_city} → {route.to_city}
+            <div>
+              <div className="text-2xl font-semibold">
+                {route.from_city} → {route.to_city}
+              </div>
+              <div className="text-gray-500 mt-2">
+                {route.courier_name} · до {route.max_weight} кг
+              </div>
             </div>
-            <div className="text-gray-500">
-              {route.courier_name} · до {route.max_weight} кг
-            </div>
+
+            <button className="bg-black text-white px-6 py-3 rounded-xl hover:opacity-90 transition">
+              Выбрать
+            </button>
           </div>
         ))}
-      </div>
+      </section>
     </main>
   )
 }
