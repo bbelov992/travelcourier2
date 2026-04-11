@@ -1,28 +1,20 @@
-import { connection } from 'next/server'
+'use client'
 
-import { getSupabaseClient } from '../lib/supabase'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { supabase } from '../lib/supabase'
 
-type Route = {
-  id: string | number
-  from_city: string
-  to_city: string
-  courier_name: string
-  max_weight: number | string
-}
+export default function Page() {
+  const [routes, setRoutes] = useState<any[]>([])
 
-export default async function Page() {
-  await connection()
-
-  const supabase = getSupabaseClient()
-  let routes: Route[] = []
-
-  if (supabase) {
-    const { data, error } = await supabase.from('routes').select('*')
-
-    if (!error && data) {
-      routes = data as Route[]
+  useEffect(() => {
+    const loadRoutes = async () => {
+      const { data } = await supabase.from('routes').select('*')
+      if (data) setRoutes(data)
     }
-  }
+
+    loadRoutes()
+  }, [])
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -59,32 +51,28 @@ export default async function Page() {
 
       {/* Routes */}
       <section className="max-w-5xl mx-auto px-6 py-16 space-y-6">
-        {routes.length > 0 ? (
-          routes.map((route) => (
-            <div
-              key={route.id}
-              className="bg-white rounded-2xl shadow-md p-8 flex justify-between items-center hover:shadow-xl transition"
-            >
-              <div>
-                <div className="text-2xl font-semibold">
-                  {route.from_city} → {route.to_city}
-                </div>
-                <div className="text-gray-500 mt-2">
-                  {route.courier_name} · до {route.max_weight} кг
-                </div>
+        {routes?.map((route) => (
+          <div
+            key={route.id}
+            className="bg-white rounded-2xl shadow-md p-8 flex justify-between items-center hover:shadow-xl transition"
+          >
+            <div>
+              <div className="text-2xl font-semibold">
+                {route.from_city} → {route.to_city}
               </div>
-
-              <button className="bg-black text-white px-6 py-3 rounded-xl hover:opacity-90 transition">
-                Выбрать
-              </button>
+              <div className="text-gray-500 mt-2">
+                {route.courier_name} · до {route.max_weight} кг
+              </div>
             </div>
-          ))
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-500">
-            Маршруты пока недоступны. Проверьте переменные окружения Supabase на
-            Vercel.
+
+            <Link
+  href={`/route/${route.id}`}
+  className="bg-black text-white px-6 py-3 rounded-xl hover:opacity-90 transition inline-block text-center"
+>
+  Выбрать
+</Link>
           </div>
-        )}
+        ))}
       </section>
     </main>
   )
