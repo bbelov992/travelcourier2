@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 
 export default async function RoutePage({
   params,
@@ -31,6 +32,14 @@ export default async function RoutePage({
           {route.price && (
             <p><strong>Цена:</strong> €{route.price}</p>
           )}
+        </div>
+        <div className="mt-6">
+          <Link
+            href={`/route/${id}/request`}
+            className="inline-block bg-black text-white px-6 py-3 rounded-xl hover:opacity-90 transition"
+          >
+            Оставить заявку
+          </Link>
         </div>
       </div>
     </main>
