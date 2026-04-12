@@ -17,17 +17,17 @@ export default function Home() {
           <div className="bg-white shadow-md rounded-2xl p-6 grid md:grid-cols-4 gap-4 flex-1">
             <input
               placeholder="Откуда"
-              className="border rounded-xl px-4 py-3"
+              className="border rounded-xl px-4 py-3 text-black placeholder-black"
             />
 
             <input
               placeholder="Куда"
-              className="border rounded-xl px-4 py-3"
+              className="border rounded-xl px-4 py-3 text-black placeholder-black"
             />
 
             <input
               type="date"
-              className="border rounded-xl px-4 py-3"
+              className="border rounded-xl px-4 py-3 text-black"
             />
 
             <button className="bg-black text-white rounded-xl py-3 hover:opacity-90 transition">
