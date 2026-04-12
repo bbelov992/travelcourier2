@@ -1,19 +1,21 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 
-export default async function RoutePage(
-  { params }: { params: { id: string } }
-) 
+export default async function RoutePage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
 
-export default async function RoutePage({ params }: RoutePageProps) {
   const { data: route, error } = await supabase
     .from('routes')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error || !route) {
-    return notFound()
+    notFound()
   }
 
   return (
@@ -27,19 +29,9 @@ export default async function RoutePage({ params }: RoutePageProps) {
           <p><strong>Курьер:</strong> {route.courier_name}</p>
           <p><strong>Максимальный вес:</strong> {route.max_weight} кг</p>
           {route.price && (
-            <p><strong>Цена:</strong> {route.price} €</p>
-          )}
-          {route.departure_date && (
-            <p><strong>Дата отправления:</strong> {new Date(route.departure_date).toLocaleDateString()}</p>
-          )}
-          {route.description && (
-            <p><strong>Описание:</strong> {route.description}</p>
+            <p><strong>Цена:</strong> €{route.price}</p>
           )}
         </div>
-
-        <button className="mt-8 w-full bg-black text-white py-3 rounded-xl hover:opacity-90 transition">
-          Оставить заявку на доставку
-        </button>
       </div>
     </main>
   )
