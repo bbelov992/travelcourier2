@@ -35,7 +35,8 @@ export default function CreateRequestPage() {
       sender_name: form.sender_name,
       sender_email: form.contact,
       weight: form.weight ? Number(form.weight) : null,
-      message: `${form.description}${form.comment ? '\n\nКомментарий: ' + form.comment : ''}`,
+      description: form.description,
+      massage: form.comment || null,
     })
 
     setLoading(false)
