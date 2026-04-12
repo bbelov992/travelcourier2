@@ -1,79 +1,94 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { supabase } from '../lib/supabase'
-
-export default function Page() {
-  const [routes, setRoutes] = useState<any[]>([])
-
-  useEffect(() => {
-    const loadRoutes = async () => {
-      const { data } = await supabase.from('routes').select('*')
-      if (data) setRoutes(data)
-    }
-
-    loadRoutes()
-  }, [])
-
+export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Hero */}
-      <section className="bg-white py-20">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-bold mb-4">
-            Доставка через путешественников
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Быстро, безопасно и дешевле курьерских служб
-          </p>
-        </div>
-      </section>
+    <main className="min-h-screen bg-gray-100 px-6 py-12">
+      <div className="max-w-5xl mx-auto">
 
-      {/* Search */}
-      <section className="-mt-10">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="bg-white rounded-2xl shadow-lg p-6 flex gap-4">
+        <h1 className="text-4xl font-bold text-center mb-3">
+          Доставка через путешественников
+        </h1>
+
+        <p className="text-center text-black mb-10">
+          Быстро, безопасно и дешевле курьерских служб
+        </p>
+
+        {/* Фильтр + Создать маршрут */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-10">
+
+          <div className="bg-white shadow-md rounded-2xl p-6 grid md:grid-cols-4 gap-4 flex-1">
             <input
               placeholder="Откуда"
-              className="flex-1 border rounded-lg px-4 py-2"
+              className="border rounded-xl px-4 py-3"
             />
+
             <input
               placeholder="Куда"
-              className="flex-1 border rounded-lg px-4 py-2"
+              className="border rounded-xl px-4 py-3"
             />
-            <button className="bg-black text-white px-6 py-2 rounded-lg hover:opacity-90 transition">
+
+            <input
+              type="date"
+              className="border rounded-xl px-4 py-3"
+            />
+
+            <button className="bg-black text-white rounded-xl py-3 hover:opacity-90 transition">
               Найти
             </button>
           </div>
-        </div>
-      </section>
 
-      {/* Routes */}
-      <section className="max-w-5xl mx-auto px-6 py-16 space-y-6">
-        {routes?.map((route) => (
-          <div
-            key={route.id}
-            className="bg-white rounded-2xl shadow-md p-8 flex justify-between items-center hover:shadow-xl transition"
+          <a
+            href="/create-route"
+            className="bg-black text-white px-6 py-3 rounded-xl hover:opacity-90 transition whitespace-nowrap"
           >
-            <div>
-              <div className="text-2xl font-semibold">
-                {route.from_city} → {route.to_city}
-              </div>
-              <div className="text-gray-500 mt-2">
-                {route.courier_name} · до {route.max_weight} кг
-              </div>
-            </div>
+            Создать маршрут
+          </a>
 
-            <Link
-  href={`/route/${route.id}`}
-  className="bg-black text-white px-6 py-3 rounded-xl hover:opacity-90 transition inline-block text-center"
->
-  Выбрать
-</Link>
+        </div>
+
+        {/* Список маршрутов */}
+        <div className="space-y-4">
+
+          <div className="bg-white shadow-sm rounded-2xl p-5 hover:shadow-md transition">
+            <h3 className="font-semibold text-lg">Berlin → Paris</h3>
+            <p className="text-black text-sm">Дата: 12 июня</p>
+            <div className="mt-4">
+              <a
+                href="/route/1/request"
+                className="inline-block bg-black text-white px-5 py-2 rounded-xl text-sm hover:opacity-90 transition"
+              >
+                Выбрать
+              </a>
+            </div>
           </div>
-        ))}
-      </section>
+
+          <div className="bg-white shadow-sm rounded-2xl p-5 hover:shadow-md transition">
+            <h3 className="font-semibold text-lg">Berlin → London</h3>
+            <p className="text-black text-sm">Дата: 15 июня</p>
+            <div className="mt-4">
+              <a
+                href="/route/1/request"
+                className="inline-block bg-black text-white px-5 py-2 rounded-xl text-sm hover:opacity-90 transition"
+              >
+                Выбрать
+              </a>
+            </div>
+          </div>
+
+          <div className="bg-white shadow-sm rounded-2xl p-5 hover:shadow-md transition">
+            <h3 className="font-semibold text-lg">Berlin → Tallinn</h3>
+            <p className="text-black text-sm">Дата: 18 июня</p>
+            <div className="mt-4">
+              <a
+                href="/route/1/request"
+                className="inline-block bg-black text-white px-5 py-2 rounded-xl text-sm hover:opacity-90 transition"
+              >
+                Выбрать
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
     </main>
   )
 }
