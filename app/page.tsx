@@ -3,7 +3,7 @@ export default function Home() {
     <main className="min-h-screen bg-gray-100 px-6 py-12">
       <div className="max-w-5xl mx-auto">
 
-        <h1 className="text-4xl font-bold text-center mb-3">
+        <h1 className="text-4xl font-bold text-center text-black mb-3">
           Доставка через путешественников
         </h1>
 
@@ -48,7 +48,7 @@ export default function Home() {
         <div className="space-y-4">
 
           <div className="bg-white shadow-sm rounded-2xl p-5 hover:shadow-md transition">
-            <h3 className="font-semibold text-lg">Berlin → Paris</h3>
+            <h3 className="font-semibold text-lg text-black">Berlin → Paris</h3>
             <p className="text-black text-sm">Дата: 12 июня</p>
             <div className="mt-4">
               <a
@@ -61,7 +61,7 @@ export default function Home() {
           </div>
 
           <div className="bg-white shadow-sm rounded-2xl p-5 hover:shadow-md transition">
-            <h3 className="font-semibold text-lg">Berlin → London</h3>
+            <h3 className="font-semibold text-lg text-black">Berlin → London</h3>
             <p className="text-black text-sm">Дата: 15 июня</p>
             <div className="mt-4">
               <a
@@ -74,7 +74,7 @@ export default function Home() {
           </div>
 
           <div className="bg-white shadow-sm rounded-2xl p-5 hover:shadow-md transition">
-            <h3 className="font-semibold text-lg">Berlin → Tallinn</h3>
+            <h3 className="font-semibold text-lg text-black">Berlin → Tallinn</h3>
             <p className="text-black text-sm">Дата: 18 июня</p>
             <div className="mt-4">
               <a
