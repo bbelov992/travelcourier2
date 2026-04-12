@@ -1,6 +1,32 @@
-
+import { supabase } from "@/lib/supabase"
+import { redirect } from "next/navigation"
 
 export default function CreateRoutePage() {
+  async function createRoute(formData: FormData) {
+    "use server"
+
+    const from_city = formData.get("from_city") as string
+    const to_city = formData.get("to_city") as string
+    const max_weight = Number(formData.get("max_weight"))
+    const courier_name = formData.get("courier_name") as string
+
+    const { error } = await supabase.from("routes").insert([
+      {
+        from_city,
+        to_city,
+        max_weight,
+        courier_name,
+      },
+    ])
+
+    if (error) {
+      console.error("Ошибка создания маршрута:", error)
+      return
+    }
+
+    redirect("/")
+  }
+
   return (
     <main className="min-h-screen bg-gray-100 px-6 py-12">
       <div className="max-w-xl mx-auto bg-white shadow-md rounded-2xl p-8">
@@ -8,7 +34,7 @@ export default function CreateRoutePage() {
           Создать новый маршрут
         </h1>
 
-        <form className="space-y-4">
+        <form action={createRoute} className="space-y-4">
           <div>
             <label className="block text-black mb-1">Откуда</label>
             <input
@@ -16,7 +42,6 @@ export default function CreateRoutePage() {
               name="from_city"
               required
               className="w-full border rounded-xl px-4 py-2 text-black"
-              placeholder="Например, Berlin"
             />
           </div>
 
@@ -27,7 +52,6 @@ export default function CreateRoutePage() {
               name="to_city"
               required
               className="w-full border rounded-xl px-4 py-2 text-black"
-              placeholder="Например, Paris"
             />
           </div>
 
@@ -38,7 +62,6 @@ export default function CreateRoutePage() {
               name="max_weight"
               required
               className="w-full border rounded-xl px-4 py-2 text-black"
-              placeholder="Например, 5"
             />
           </div>
 
@@ -49,7 +72,6 @@ export default function CreateRoutePage() {
               name="courier_name"
               required
               className="w-full border rounded-xl px-4 py-2 text-black"
-              placeholder="Ваше имя"
             />
           </div>
 
