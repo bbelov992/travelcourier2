@@ -1,9 +1,14 @@
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@supabase/supabase-js"
 import { redirect } from "next/navigation"
 
 export default function CreateRoutePage() {
   async function createRoute(formData: FormData) {
     "use server"
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
     const from_city = formData.get("from_city") as string
     const to_city = formData.get("to_city") as string
@@ -20,8 +25,8 @@ export default function CreateRoutePage() {
     ])
 
     if (error) {
-      console.error("Ошибка создания маршрута:", error)
-      return
+      console.error(error)
+      throw new Error("Ошибка вставки")
     }
 
     redirect("/")
@@ -35,49 +40,41 @@ export default function CreateRoutePage() {
         </h1>
 
         <form action={createRoute} className="space-y-4">
-          <div>
-            <label className="block text-black mb-1">Откуда</label>
-            <input
-              type="text"
-              name="from_city"
-              required
-              className="w-full border rounded-xl px-4 py-2 text-black"
-            />
-          </div>
+          <input
+            type="text"
+            name="from_city"
+            required
+            className="w-full border rounded-xl px-4 py-2 text-black"
+            placeholder="Откуда"
+          />
 
-          <div>
-            <label className="block text-black mb-1">Куда</label>
-            <input
-              type="text"
-              name="to_city"
-              required
-              className="w-full border rounded-xl px-4 py-2 text-black"
-            />
-          </div>
+          <input
+            type="text"
+            name="to_city"
+            required
+            className="w-full border rounded-xl px-4 py-2 text-black"
+            placeholder="Куда"
+          />
 
-          <div>
-            <label className="block text-black mb-1">Максимальный вес (кг)</label>
-            <input
-              type="number"
-              name="max_weight"
-              required
-              className="w-full border rounded-xl px-4 py-2 text-black"
-            />
-          </div>
+          <input
+            type="number"
+            name="max_weight"
+            required
+            className="w-full border rounded-xl px-4 py-2 text-black"
+            placeholder="Вес"
+          />
 
-          <div>
-            <label className="block text-black mb-1">Имя курьера</label>
-            <input
-              type="text"
-              name="courier_name"
-              required
-              className="w-full border rounded-xl px-4 py-2 text-black"
-            />
-          </div>
+          <input
+            type="text"
+            name="courier_name"
+            required
+            className="w-full border rounded-xl px-4 py-2 text-black"
+            placeholder="Имя"
+          />
 
           <button
             type="submit"
-            className="w-full bg-black text-white py-3 rounded-xl hover:opacity-90 transition"
+            className="w-full bg-black text-white py-3 rounded-xl"
           >
             Создать маршрут
           </button>
