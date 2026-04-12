@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 
 export default async function RoutePage(
   { params }: { params: { id: string } }
-) {
+) 
+
+export default async function RoutePage({ params }: RoutePageProps) {
   const { data: route, error } = await supabase
     .from('routes')
     .select('*')
