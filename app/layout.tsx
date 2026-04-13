@@ -1,15 +1,8 @@
 "use client"
-
-import type { Metadata } from "next"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import "./globals.css"
-
-export const metadata: Metadata = {
-  title: "Travel Courier",
-  description: "Доставка через путешественников",
-}
 
 export default function RootLayout({
   children,
