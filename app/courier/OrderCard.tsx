@@ -4,10 +4,15 @@ import { supabase } from "@/lib/supabase"
 
 export default function OrderCard({ order }: any) {
   const handleUpdate = async (newStatus: string) => {
-    await supabase
+    const { error } = await supabase
       .from("orders")
       .update({ status: newStatus })
       .eq("id", order.id)
+
+    if (error) {
+      alert("Ошибка обновления: " + error.message)
+      return
+    }
 
     window.location.reload()
   }
