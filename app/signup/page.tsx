@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [role, setRole] = useState<'courier' | 'sender'>('sender')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -17,7 +18,7 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
@@ -26,6 +27,23 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
       return
+    }
+
+    const userId = data.user?.id
+
+    if (userId) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          role,
+        })
+
+      if (profileError) {
+        setError(profileError.message)
+        setLoading(false)
+        return
+      }
     }
 
     router.push("/dashboard")
@@ -54,6 +72,26 @@ export default function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border rounded-xl px-4 py-3"
           />
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Выберите роль:</p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setRole('sender')}
+                className={`px-4 py-2 rounded-xl border ${role === 'sender' ? 'bg-black text-white' : ''}`}
+              >
+                Я отправитель
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('courier')}
+                className={`px-4 py-2 rounded-xl border ${role === 'courier' ? 'bg-black text-white' : ''}`}
+              >
+                Я курьер
+              </button>
+            </div>
+          </div>
 
           {error && (
             <p className="text-red-500 text-sm">{error}</p>
