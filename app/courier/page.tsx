@@ -1,3 +1,5 @@
+import OrderCard from "./OrderCard"
+
 export const dynamic = "force-dynamic"
 
 import { supabase } from "@/lib/supabase"
@@ -40,23 +42,9 @@ export default async function CourierPage() {
               )}
 
               {routeOrders?.map((order) => (
-                <div
-                  key={order.id}
-                  className="border rounded-xl p-4 mb-4"
-                >
-                  <p className="text-black">
-                    Статус: {order.status}
-                  </p>
-
-                  {order.status === "accepted" && (
-                    <div className="mt-2 text-black">
-                      <p>Имя: {order.sender_name}</p>
-                      <p>Email: {order.sender_email}</p>
-                      <p>Сообщение: {order.massage}</p>
-                    </div>
-                  )}
-                </div>
+                <OrderCard key={order.id} order={order} />
               ))}
+
             </div>
           )
         })}
