@@ -89,7 +89,14 @@ export default function CreateRequestPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 py-16 px-6">
-      <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+      <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-lg p-8 relative">
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="absolute top-4 right-4 text-black text-xl"
+        >
+          ✕
+        </button>
         <h1 className="text-2xl font-bold mb-6 text-gray-900">
           Заявка на доставку
         </h1>
