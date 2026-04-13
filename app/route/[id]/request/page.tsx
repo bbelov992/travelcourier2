@@ -57,16 +57,33 @@ export default function CreateRequestPage() {
 
   if (success) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-        <div className="bg-white p-8 rounded-2xl shadow-lg text-center max-w-md w-full">
-          <h1 className="text-2xl font-bold mb-4 text-gray-900">
+      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+        <div className="bg-white rounded-2xl p-8 max-w-md w-full relative shadow-xl">
+  
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="absolute top-4 right-4 text-gray-500 hover:text-black text-xl"
+          >
+            ✕
+          </button>
+  
+          <h2 className="text-2xl font-bold text-black mb-4">
             Заявка отправлена!
-          </h1>
-          <p className="text-gray-700">
-            Данные успешно сохранены в базе. Курьер свяжется с вами.
+          </h2>
+  
+          <p className="text-black mb-6">
+            Курьер получит уведомление и свяжется с вами.
           </p>
+  
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="w-full bg-black text-white py-3 rounded-xl hover:opacity-90 transition"
+          >
+            Вернуться на главную
+          </button>
+  
         </div>
-      </main>
+      </div>
     )
   }
 
