@@ -1,11 +1,47 @@
-export const dynamic = "force-dynamic"
+"use client"
+
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
-export default async function Home() {
-  const { data: routes, error } = await supabase
-    .from("routes")
-    .select("*")
-    .order("id", { ascending: false })
+export default function Home() {
+  const [routes, setRoutes] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const [fromFilter, setFromFilter] = useState("")
+  const [toFilter, setToFilter] = useState("")
+  const [dateFilter, setDateFilter] = useState("")
+
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      const { data, error } = await supabase
+        .from("routes")
+        .select("*")
+        .order("id", { ascending: false })
+
+      if (!error && data) {
+        setRoutes(data)
+      }
+
+      setLoading(false)
+    }
+
+    fetchRoutes()
+  }, [])
+
+  const filteredRoutes = routes.filter((route) => {
+    const matchFrom =
+      !fromFilter ||
+      route.from_city.toLowerCase().includes(fromFilter.toLowerCase())
+
+    const matchTo =
+      !toFilter ||
+      route.to_city.toLowerCase().includes(toFilter.toLowerCase())
+
+    const matchDate =
+      !dateFilter || route.departure_date === dateFilter
+
+    return matchFrom && matchTo && matchDate
+  })
 
   return (
     <main className="min-h-screen bg-gray-100 px-6 py-12">
@@ -24,20 +60,29 @@ export default async function Home() {
           <div className="bg-white shadow-md rounded-2xl p-6 grid md:grid-cols-4 gap-4 flex-1">
             <input
               placeholder="Откуда"
+              value={fromFilter}
+              onChange={(e) => setFromFilter(e.target.value)}
               className="border rounded-xl px-4 py-3 text-black placeholder-black"
             />
 
             <input
               placeholder="Куда"
+              value={toFilter}
+              onChange={(e) => setToFilter(e.target.value)}
               className="border rounded-xl px-4 py-3 text-black placeholder-black"
             />
 
             <input
               type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
               className="border rounded-xl px-4 py-3 text-black"
             />
 
-            <button className="bg-black text-white rounded-xl py-3 hover:opacity-90 transition">
+            <button
+              onClick={() => {}}
+              className="bg-black text-white rounded-xl py-3 hover:opacity-90 transition"
+            >
               Найти
             </button>
           </div>
@@ -52,19 +97,20 @@ export default async function Home() {
         </div>
 
         <div className="space-y-4">
-          {error && (
-            <div className="bg-red-100 text-red-700 p-4 rounded-xl">
-              Ошибка загрузки маршрутов
+
+          {loading && (
+            <div className="bg-white shadow-sm rounded-2xl p-6 text-center text-black">
+              Загрузка маршрутов...
             </div>
           )}
 
-          {routes && routes.length === 0 && (
-            <div className="bg-white shadow-sm rounded-2xl p-6 text-center text-gray-600">
-              Пока нет доступных маршрутов. Создайте первый маршрут!
+          {!loading && filteredRoutes.length === 0 && (
+            <div className="bg-white shadow-sm rounded-2xl p-6 text-center text-black">
+              Маршруты не найдены
             </div>
           )}
 
-          {routes?.map((route) => (
+          {filteredRoutes.map((route) => (
             <div
               key={route.id}
               className="bg-white shadow-sm rounded-2xl p-5 hover:shadow-md transition"
@@ -72,15 +118,19 @@ export default async function Home() {
               <h3 className="font-semibold text-lg text-black">
                 {route.from_city} → {route.to_city}
               </h3>
+
               <p className="text-black text-sm">
                 Курьер: {route.courier_name}
               </p>
+
               <p className="text-black text-sm">
                 Максимальный вес: {route.max_weight} кг
               </p>
+
               <p className="text-black text-sm">
                 Дата вылета: {route.departure_date ? new Date(route.departure_date).toLocaleDateString() : "—"}
               </p>
+
               <div className="mt-4">
                 <a
                   href={`/route/${route.id}/request`}
@@ -96,4 +146,4 @@ export default async function Home() {
       </div>
     </main>
   )
-  }
+}
