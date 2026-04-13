@@ -14,6 +14,7 @@ export default function CreateRoutePage() {
     const to_city = formData.get("to_city") as string
     const max_weight = Number(formData.get("max_weight"))
     const courier_name = formData.get("courier_name") as string
+    const departure_date = formData.get("departure_date") as string
 
     const { error } = await supabase.from("routes").insert([
       {
@@ -21,6 +22,7 @@ export default function CreateRoutePage() {
         to_city,
         max_weight,
         courier_name,
+        departure_date,
       },
     ])
 
@@ -70,6 +72,13 @@ export default function CreateRoutePage() {
             required
             className="w-full border rounded-xl px-4 py-2 text-black"
             placeholder="Имя"
+          />
+
+          <input
+            type="date"
+            name="departure_date"
+            required
+            className="w-full border rounded-xl px-4 py-2 text-black"
           />
 
           <button
