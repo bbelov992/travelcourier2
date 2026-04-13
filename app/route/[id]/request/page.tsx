@@ -3,9 +3,20 @@
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useEffect } from 'react'
 
 export default function CreateRequestPage() {
   const { id: routeId } = useParams() as { id: string }
+
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getUser()
+      setUserId(data.user?.id ?? null)
+    }
+    loadUser()
+  }, [])
 
   const [form, setForm] = useState({
     sender_name: '',
@@ -30,13 +41,18 @@ export default function CreateRequestPage() {
 
     const validRouteId = /^[0-9a-fA-F-]{36}$/.test(routeId) ? routeId : null
 
-    const { error } = await supabase.from('orders').insert({
+    if (!userId) {
+      alert('Вы должны войти в аккаунт для отправки заявки')
+      setLoading(false)
+      return
+    }
+
+    const { error } = await supabase.from('requests').insert({
       route_id: validRouteId,
-      sender_name: form.sender_name,
-      sender_email: form.contact,
+      sender_id: userId,
       weight: form.weight ? Number(form.weight) : null,
-      description: form.description,
-      massage: form.comment || null,
+      message: form.comment || null,
+      status: 'pending',
     })
 
     setLoading(false)
