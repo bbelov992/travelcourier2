@@ -35,8 +35,16 @@ export default function RootLayout({
     <html lang="ru" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         
-        {/* HEADER */}
-        <header className="w-full flex justify-end items-center px-6 py-4">
+        <header className="w-full flex justify-between items-center px-6 py-4">
+          {/* LEFT: Home button */}
+          <Link
+            href="/"
+            className="px-4 py-2 border border-black rounded-xl"
+          >
+            На главную
+          </Link>
+
+          {/* RIGHT: Auth buttons */}
           {!user ? (
             <div className="flex gap-4">
               <Link
@@ -53,12 +61,23 @@ export default function RootLayout({
               </Link>
             </div>
           ) : (
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 bg-black text-white rounded-xl"
-            >
-              Мой профиль
-            </Link>
+            <div className="flex gap-4">
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 bg-black text-white rounded-xl"
+              >
+                Мой профиль
+              </Link>
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  window.location.href = "/"
+                }}
+                className="px-4 py-2 border border-black rounded-xl"
+              >
+                Выйти
+              </button>
+            </div>
           )}
         </header>
 
