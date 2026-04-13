@@ -78,6 +78,9 @@ export default async function Home() {
               <p className="text-black text-sm">
                 Максимальный вес: {route.max_weight} кг
               </p>
+              <p className="text-black text-sm">
+                Дата вылета: {route.departure_date ? new Date(route.departure_date).toLocaleDateString() : "—"}
+              </p>
               <div className="mt-4">
                 <a
                   href={`/route/${route.id}/request`}
