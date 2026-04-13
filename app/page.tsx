@@ -19,7 +19,6 @@ export default async function Home() {
           Быстро, безопасно и дешевле курьерских служб
         </p>
 
-        {/* Фильтр + Создать маршрут */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-10">
 
           <div className="bg-white shadow-md rounded-2xl p-6 grid md:grid-cols-4 gap-4 flex-1">
@@ -52,7 +51,6 @@ export default async function Home() {
 
         </div>
 
-        {/* Список маршрутов */}
         <div className="space-y-4">
           {error && (
             <div className="bg-red-100 text-red-700 p-4 rounded-xl">
