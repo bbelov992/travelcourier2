@@ -72,7 +72,7 @@ export default function Header() {
             </Link>
 
             <Link
-              href="/register"
+              href="/signup"
               className="bg-gray-700 px-4 py-2 rounded-xl hover:opacity-90 transition"
             >
               Регистрация
