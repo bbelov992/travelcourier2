@@ -18,6 +18,7 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
 
+    // 1. Регистрация пользователя
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -31,6 +32,7 @@ export default function SignupPage() {
 
     const userId = data.user?.id
 
+    // 2. Создание профиля с ролью
     if (userId) {
       const { error: profileError } = await supabase
         .from('profiles')
@@ -46,6 +48,19 @@ export default function SignupPage() {
       }
     }
 
+    // 3. Автоматический вход после регистрации
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      setError(signInError.message)
+      setLoading(false)
+      return
+    }
+
+    // 4. Переход в личный кабинет
     router.push("/dashboard")
   }
 
