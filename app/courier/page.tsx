@@ -52,11 +52,12 @@ export default async function CourierPage() {
 
   const routeIds = routes?.map((r) => r.id) || []
 
-  const { data: orders } = routeIds.length
+  const { data: requests } = routeIds.length
     ? await supabase
-        .from("orders")
+        .from("requests")
         .select("*")
         .in("route_id", routeIds)
+        .eq("status", "pending")
         .order("id", { ascending: false })
     : { data: [] }
 
@@ -74,8 +75,8 @@ export default async function CourierPage() {
         )}
 
         {routes?.map((route) => {
-          const routeOrders = orders?.filter(
-            (order) => order.route_id === route.id
+          const routeRequests = requests?.filter(
+            (request) => request.route_id === route.id
           )
 
           return (
@@ -87,12 +88,12 @@ export default async function CourierPage() {
                 {route.from_city} → {route.to_city}
               </h2>
 
-              {routeOrders?.length === 0 && (
+              {routeRequests?.length === 0 && (
                 <p className="text-gray-500">Нет заявок</p>
               )}
 
-              {routeOrders?.map((order) => (
-                <OrderCard key={order.id} order={order} />
+              {routeRequests?.map((request) => (
+                <OrderCard key={request.id} order={request} />
               ))}
             </div>
           )
