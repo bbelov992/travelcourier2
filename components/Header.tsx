@@ -67,7 +67,7 @@ export default function Header() {
       </Link>
 
       <div className="flex gap-3">
-        {session ? (
+        {session && role ? (
           <>
             <Link
               href={role === 'courier' ? '/courier' : '/'}
@@ -102,5 +102,5 @@ export default function Header() {
         )}
       </div>
     </header>
-  )
+  ) 
 }
