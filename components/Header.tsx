@@ -7,19 +7,40 @@ import { supabase } from '@/lib/supabase'
 export default function Header() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [role, setRole] = useState<string | null>(null)
 
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession()
       setSession(data.session)
+      if (data.session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.session.user.id)
+          .single()
+
+        setRole(profile?.role || null)
+      }
       setLoading(false)
     }
 
     getSession()
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session)
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single()
+
+          setRole(profile?.role || null)
+        } else {
+          setRole(null)
+        }
       }
     )
 
@@ -49,7 +70,7 @@ export default function Header() {
         {session ? (
           <>
             <Link
-              href="/profile"
+              href={role === 'courier' ? '/courier' : '/'}
               className="bg-gray-800 px-4 py-2 rounded-xl hover:opacity-90 transition"
             >
               Мой профиль
