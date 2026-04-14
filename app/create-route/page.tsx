@@ -10,6 +10,14 @@ export default function CreateRoutePage() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      redirect("/login")
+    }
+
     const from_city = formData.get("from_city") as string
     const to_city = formData.get("to_city") as string
     const max_weight = Number(formData.get("max_weight"))
@@ -23,6 +31,7 @@ export default function CreateRoutePage() {
         max_weight,
         courier_name,
         departure_date,
+        courier_id: user.id,
       },
     ])
 
