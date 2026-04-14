@@ -8,6 +8,9 @@ export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<'courier' | 'sender'>('sender')
+  const [fullName, setFullName] = useState("")
+  const [telegram, setTelegram] = useState("")
+  const [phone, setPhone] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,43 +22,50 @@ export default function SignupPage() {
     setError(null)
 
     // 1. Регистрация пользователя
-    const { data, error } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
     })
 
-    if (error) {
-      setError(error.message)
+    if (signUpError) {
+      setError(signUpError.message)
       setLoading(false)
       return
     }
 
-    const userId = data.user?.id
-
-    // 2. Создание профиля с ролью
-    if (userId) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          role,
-        })
-
-      if (profileError) {
-        setError(profileError.message)
-        setLoading(false)
-        return
-      }
-    }
-
-    // 3. Автоматический вход после регистрации
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    // 2. Автоматический вход после регистрации (нужен для получения пользователя)
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
     if (signInError) {
       setError(signInError.message)
+      setLoading(false)
+      return
+    }
+
+    const userId = signInData.user?.id
+
+    if (!userId) {
+      setError("Не удалось получить ID пользователя после регистрации.")
+      setLoading(false)
+      return
+    }
+
+    // 3. Создание профиля с ролью и дополнительными полями
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: userId,
+        role,
+        full_name: fullName,
+        telegram,
+        phone,
+      })
+
+    if (profileError) {
+      setError(profileError.message)
       setLoading(false)
       return
     }
@@ -85,6 +95,31 @@ export default function SignupPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="w-full border rounded-xl px-4 py-3"
+          />
+
+          <input
+            type="text"
+            placeholder="Ваше имя"
+            required
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="w-full border rounded-xl px-4 py-3"
+          />
+
+          <input
+            type="text"
+            placeholder="Telegram (необязательно)"
+            value={telegram}
+            onChange={(e) => setTelegram(e.target.value)}
+            className="w-full border rounded-xl px-4 py-3"
+          />
+
+          <input
+            type="text"
+            placeholder="Телефон (необязательно)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             className="w-full border rounded-xl px-4 py-3"
           />
 
