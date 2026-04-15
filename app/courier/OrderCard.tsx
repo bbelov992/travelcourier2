@@ -25,6 +25,9 @@ export default function OrderCard({ order }: any) {
     const { error: orderError } = await supabase.from("orders").insert({
       route_id: order.route_id,
       sender_id: order.sender_id,
+      sender_name: order.sender_name,
+      description: order.description,
+      message: order.message,
       status: "active",
       request_id: order.id
     })
