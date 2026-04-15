@@ -23,7 +23,7 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setError(error.message)
+      setError(error.massage)
       setLoading(false)
       return
     }

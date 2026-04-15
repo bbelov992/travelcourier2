@@ -16,7 +16,7 @@ export default function OrderCard({ order }: any) {
       .eq("id", order.id)
 
     if (requestError) {
-      alert("Ошибка обновления заявки: " + requestError.message)
+      alert("Ошибка обновления заявки: " + requestError.massage)
       setLoading(false)
       return
     }
@@ -33,7 +33,7 @@ export default function OrderCard({ order }: any) {
     })
 
     if (orderError) {
-      alert("Ошибка создания ордера: " + orderError.message)
+      alert("Ошибка создания ордера: " + orderError.massage)
       setLoading(false)
       return
     }
@@ -50,7 +50,7 @@ export default function OrderCard({ order }: any) {
       .eq("id", order.id)
 
     if (error) {
-      alert("Ошибка обновления: " + error.message)
+      alert("Ошибка обновления: " + error.massage)
       setLoading(false)
       return
     }
