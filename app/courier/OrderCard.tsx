@@ -27,7 +27,7 @@ export default function OrderCard({ order }: any) {
       sender_id: order.sender_id,
       sender_name: order.sender_name,
       description: order.description,
-      message: order.message,
+      massage: order.massage,
       status: "active",
       request_id: order.id
     })
@@ -88,7 +88,7 @@ export default function OrderCard({ order }: any) {
       {order.status === "accepted" && (
         <div className="mt-3 text-black">
           <p>Описание: {order.description}</p>
-          <p>Сообщение: {order.message}</p>
+          <p>Сообщение: {order.massage}</p>
           <p>ID отправителя: {order.sender_id}</p>
         </div>
       )}
