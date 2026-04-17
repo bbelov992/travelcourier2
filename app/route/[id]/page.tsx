@@ -5,9 +5,9 @@ import Link from 'next/link'
 export default async function RoutePage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const { id } = await params
+  const { id } = params
 
   const { data: route, error } = await supabase
     .from('routes')
@@ -27,7 +27,6 @@ export default async function RoutePage({
         </h1>
 
         <div className="space-y-3 text-lg">
-          <p><strong>Курьер:</strong> {route.courier_name}</p>
           <p><strong>Максимальный вес:</strong> {route.max_weight} кг</p>
           {route.price && (
             <p><strong>Цена:</strong> €{route.price}</p>
