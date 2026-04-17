@@ -8,16 +8,6 @@ import { useEffect } from 'react'
 export default function CreateRequestPage() {
   const { id: routeId } = useParams() as { id: string }
 
-  const [userId, setUserId] = useState<string | null>(null)
-
-  useEffect(() => {
-    const loadUser = async () => {
-      const { data } = await supabase.auth.getUser()
-      setUserId(data.user?.id ?? null)
-    }
-    loadUser()
-  }, [])
-
   const [form, setForm] = useState({
     sender_name: '',
     contact: '',
@@ -41,7 +31,11 @@ export default function CreateRequestPage() {
 
     const validRouteId = /^[0-9a-fA-F-]{36}$/.test(routeId) ? routeId : null
 
-    if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
       alert('Вы должны войти в аккаунт для отправки заявки')
       setLoading(false)
       return
@@ -49,7 +43,7 @@ export default function CreateRequestPage() {
 
     const { error } = await supabase.from('requests').insert({
       route_id: validRouteId,
-      sender_id: userId,
+      sender_id: user.id,
       weight: form.weight ? Number(form.weight) : null,
       message: form.comment || null,
       status: 'pending',
