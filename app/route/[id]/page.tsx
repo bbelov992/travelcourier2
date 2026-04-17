@@ -5,9 +5,9 @@ import Link from 'next/link'
 export default async function RoutePage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const { id } = params
+  const { id } = await params
 
   const { data: route, error } = await supabase
     .from('routes')
