@@ -57,7 +57,7 @@ export default async function CourierPage() {
         .from("requests")
         .select("*")
         .in("route_id", routeIds)
-        .eq("status", "pending")
+        .in("status", ["pending", "accepted"])
         .order("id", { ascending: false })
     : { data: [] }
 
