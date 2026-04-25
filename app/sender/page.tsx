@@ -8,9 +8,13 @@ import { supabase } from "@/lib/supabase"
 type SenderRequest = {
   id: string
   route_id: string | null
+  sender_name?: string | null
+  contact?: string | null
+  description?: string | null
   weight: number | null
   message: string | null
   status: string | null
+  created_at?: string | null
 }
 
 type RouteSummary = {
@@ -33,6 +37,20 @@ const statusStyles: Record<string, string> = {
   rejected: "bg-rose-100 text-rose-800",
 }
 
+function isSchemaMismatchError(error: { code?: string; message?: string } | null) {
+  if (!error) {
+    return false
+  }
+
+  const details = `${error.code ?? ""} ${error.message ?? ""}`.toLowerCase()
+
+  return (
+    details.includes("pgrst204") ||
+    details.includes("schema cache") ||
+    details.includes("column")
+  )
+}
+
 export default function SenderPage() {
   const router = useRouter()
   const [profileName, setProfileName] = useState<string | null>(null)
@@ -50,19 +68,22 @@ export default function SenderPage() {
         setLoading(true)
       }
 
-      const requestsWithCreatedAt = await supabase
+      const requestsWithFullPayload = await supabase
         .from("requests")
-        .select("id, route_id, weight, message, status, created_at")
+        .select(
+          "id, route_id, sender_name, contact, description, weight, message, status, created_at"
+        )
         .eq("sender_id", senderId)
         .order("created_at", { ascending: false })
 
-      const requestsResult = requestsWithCreatedAt.error
+      const requestsResult = requestsWithFullPayload.error &&
+        isSchemaMismatchError(requestsWithFullPayload.error)
         ? await supabase
             .from("requests")
             .select("id, route_id, weight, message, status")
             .eq("sender_id", senderId)
             .order("id", { ascending: false })
-        : requestsWithCreatedAt
+        : requestsWithFullPayload
 
       if (cancelled) {
         return
@@ -278,7 +299,7 @@ export default function SenderPage() {
                     </span>
                   </div>
 
-                  <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-xl bg-gray-50 p-4">
                       <p className="text-sm text-gray-500">Курьер</p>
                       <p className="mt-1 font-medium text-black">
@@ -303,6 +324,40 @@ export default function SenderPage() {
                         {request.weight ? `${request.weight} кг` : "Не указан"}
                       </p>
                     </div>
+
+                    <div className="rounded-xl bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">Отправлена</p>
+                      <p className="mt-1 font-medium text-black">
+                        {request.created_at
+                          ? new Date(request.created_at).toLocaleDateString(
+                              "ru-RU"
+                            )
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-xl bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">Контакт</p>
+                      <p className="mt-1 text-black">
+                        {request.contact || "Не указан"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">Имя в заявке</p>
+                      <p className="mt-1 text-black">
+                        {request.sender_name || profileName || "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-xl bg-gray-50 p-4">
+                    <p className="text-sm text-gray-500">Описание посылки</p>
+                    <p className="mt-1 text-black">
+                      {request.description || "Описание не добавлено"}
+                    </p>
                   </div>
 
                   <div className="mt-4 rounded-xl bg-gray-50 p-4">

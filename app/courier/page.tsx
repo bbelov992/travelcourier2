@@ -16,7 +16,9 @@ type Request = {
   route_id: string
   sender_id: string
   sender_name?: string | null
+  contact?: string | null
   description?: string | null
+  weight?: number | null
   message?: string | null
   status: string
 }
