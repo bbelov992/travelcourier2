@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useEffect } from 'react'
 
 export default function CreateRequestPage() {
   const { id: routeId } = useParams() as { id: string }

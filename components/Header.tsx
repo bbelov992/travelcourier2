@@ -2,12 +2,17 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
+type UserRole = 'courier' | 'sender'
+
 export default function Header() {
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const [role, setRole] = useState<string | null>(null)
+  const [role, setRole] = useState<UserRole | null>(null)
+  const profileHref =
+    role === 'courier' ? '/courier' : role === 'sender' ? '/sender' : '/dashboard'
 
   useEffect(() => {
     const getSession = async () => {
@@ -20,7 +25,7 @@ export default function Header() {
           .eq('id', data.session.user.id)
           .single()
 
-        setRole(profile?.role || null)
+        setRole((profile?.role as UserRole | null) || null)
       }
       setLoading(false)
     }
@@ -37,7 +42,7 @@ export default function Header() {
             .eq('id', session.user.id)
             .single()
 
-          setRole(profile?.role || null)
+          setRole((profile?.role as UserRole | null) || null)
         } else {
           setRole(null)
         }
@@ -70,7 +75,7 @@ export default function Header() {
         {session && role ? (
           <>
             <Link
-              href={role === 'courier' ? '/courier' : '/'}
+              href={profileHref}
               className="bg-gray-800 px-4 py-2 rounded-xl hover:opacity-90 transition"
             >
               Мой профиль

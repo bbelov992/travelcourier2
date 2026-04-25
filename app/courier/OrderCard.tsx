@@ -3,7 +3,17 @@
 import { supabase } from "@/lib/supabase"
 import { useState } from "react"
 
-export default function OrderCard({ order }: any) {
+type Order = {
+  id: string
+  route_id: string
+  sender_id: string
+  sender_name?: string | null
+  description?: string | null
+  message?: string | null
+  status: string
+}
+
+export default function OrderCard({ order }: { order: Order }) {
   const [loading, setLoading] = useState(false)
 
   const handleAccept = async () => {
@@ -25,11 +35,11 @@ export default function OrderCard({ order }: any) {
     const { error: orderError } = await supabase.from("orders").insert({
       route_id: order.route_id,
       sender_id: order.sender_id,
-      sender_name: order.sender_name,
-      description: order.description,
-      message: order.message,
+      sender_name: order.sender_name ?? null,
+      description: order.description ?? null,
+      message: order.message ?? null,
       status: "active",
-      request_id: order.id
+      request_id: order.id,
     })
 
     if (orderError) {

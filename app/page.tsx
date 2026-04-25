@@ -3,8 +3,17 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
+type RouteCard = {
+  id: string
+  from_city: string
+  to_city: string
+  courier_name: string | null
+  max_weight: number | null
+  departure_date: string | null
+}
+
 export default function Home() {
-  const [routes, setRoutes] = useState<any[]>([])
+  const [routes, setRoutes] = useState<RouteCard[]>([])
   const [loading, setLoading] = useState(true)
 
   const [fromFilter, setFromFilter] = useState("")
@@ -19,7 +28,7 @@ export default function Home() {
         .order("id", { ascending: false })
 
       if (!error && data) {
-        setRoutes(data)
+        setRoutes(data as RouteCard[])
       }
 
       setLoading(false)

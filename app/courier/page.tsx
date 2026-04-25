@@ -1,9 +1,25 @@
 import OrderCard from "./OrderCard"
-import { createServerClient } from "@supabase/ssr"
+import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
+
+type Route = {
+  id: string
+  from_city: string
+  to_city: string
+}
+
+type Request = {
+  id: string
+  route_id: string
+  sender_id: string
+  sender_name?: string | null
+  description?: string | null
+  message?: string | null
+  status: string
+}
 
 export default async function CourierPage() {
   const cookieStore = await cookies()
@@ -16,10 +32,10 @@ export default async function CourierPage() {
         get(name: string) {
           return cookieStore.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: CookieOptionsWithName) {
           cookieStore.set({ name, value, ...options })
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: CookieOptionsWithName) {
           cookieStore.set({ name, value: "", ...options })
         },
       },
@@ -50,7 +66,9 @@ export default async function CourierPage() {
     .eq("courier_id", user.id)
     .order("id", { ascending: false })
 
-  const routeIds = routes?.map((r) => r.id) || []
+  const typedRoutes = (routes ?? []) as Route[]
+
+  const routeIds = typedRoutes.map((route) => route.id)
 
   const { data: requests } = routeIds.length
     ? await supabase
@@ -61,6 +79,8 @@ export default async function CourierPage() {
         .order("id", { ascending: false })
     : { data: [] }
 
+  const typedRequests = (requests ?? []) as Request[]
+
   return (
     <main className="min-h-screen bg-gray-100 px-6 py-12">
       <div className="max-w-5xl mx-auto">
@@ -68,14 +88,14 @@ export default async function CourierPage() {
           Кабинет курьера
         </h1>
 
-        {routes?.length === 0 && (
+        {typedRoutes.length === 0 && (
           <p className="text-gray-500">
             У вас пока нет созданных маршрутов.
           </p>
         )}
 
-        {routes?.map((route) => {
-          const routeRequests = requests?.filter(
+        {typedRoutes.map((route) => {
+          const routeRequests = typedRequests.filter(
             (request) => request.route_id === route.id
           )
 

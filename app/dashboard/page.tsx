@@ -1,49 +1,51 @@
-"use client"
+import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+export const dynamic = "force-dynamic"
 
-export default function DashboardPage() {
-  const [userEmail, setUserEmail] = useState<string | null>(null)
-  const router = useRouter()
+export default async function DashboardPage() {
+  const cookieStore = await cookies()
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser()
-
-      if (!data.user) {
-        router.push("/login")
-        return
-      }
-
-      setUserEmail(data.user.email ?? null)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptionsWithName) {
+          cookieStore.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptionsWithName) {
+          cookieStore.set({ name, value: "", ...options })
+        },
+      },
     }
+  )
 
-    checkUser()
-  }, [router])
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/")
+  if (!user) {
+    redirect("/login")
   }
 
-  return (
-    <main className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md text-center">
-        <h1 className="text-2xl font-bold mb-4">Личный кабинет</h1>
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
 
-        <p className="mb-6 text-black">
-          Вы вошли как: <strong>{userEmail}</strong>
-        </p>
+  if (profile?.role === "courier") {
+    redirect("/courier")
+  }
 
-        <button
-          onClick={handleLogout}
-          className="w-full bg-black text-white py-3 rounded-xl"
-        >
-          Выйти
-        </button>
-      </div>
-    </main>
-  )
+  if (profile?.role === "sender") {
+    redirect("/sender")
+  }
+
+  redirect("/")
 }
