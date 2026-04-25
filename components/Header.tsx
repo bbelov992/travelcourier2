@@ -1,105 +1,61 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { redirect } from 'next/navigation'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
 
-type UserRole = 'courier' | 'sender'
+export default async function Header() {
+  async function logout() {
+    'use server'
 
-export default function Header() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [role, setRole] = useState<UserRole | null>(null)
-  const profileHref =
-    role === 'courier' ? '/courier' : role === 'sender' ? '/sender' : '/dashboard'
-
-  useEffect(() => {
-    const getSession = async () => {
-      const { data } = await supabase.auth.getSession()
-      setSession(data.session)
-      if (data.session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.session.user.id)
-          .single()
-
-        setRole((profile?.role as UserRole | null) || null)
-      }
-      setLoading(false)
-    }
-
-    getSession()
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session)
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single()
-
-          setRole((profile?.role as UserRole | null) || null)
-        } else {
-          setRole(null)
-        }
-      }
-    )
-
-    return () => {
-      listener.subscription.unsubscribe()
-    }
-  }, [])
-
-  const handleLogout = async () => {
+    const supabase = await createSupabaseServerClient()
     await supabase.auth.signOut()
-    window.location.href = '/'
+    redirect('/')
   }
 
-  if (loading) return null
+  const supabase = await createSupabaseServerClient()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
   return (
-    <header className="bg-black text-white px-6 py-4 flex justify-between items-center">
-      
+    <header className="flex items-center justify-between bg-black px-6 py-4 text-white">
       <Link
         href="/"
-        className="bg-gray-800 px-4 py-2 rounded-xl hover:opacity-90 transition"
+        className="rounded-xl bg-gray-800 px-4 py-2 transition hover:opacity-90"
       >
         На главную
       </Link>
 
       <div className="flex gap-3">
-        {session && role ? (
+        {session ? (
           <>
             <Link
-              href={profileHref}
-              className="bg-gray-800 px-4 py-2 rounded-xl hover:opacity-90 transition"
+              href="/dashboard"
+              className="rounded-xl bg-gray-800 px-4 py-2 transition hover:opacity-90"
             >
               Мой профиль
             </Link>
 
-            <button
-              onClick={handleLogout}
-              className="bg-gray-700 px-4 py-2 rounded-xl hover:opacity-90 transition"
-            >
-              Выйти
-            </button>
+            <form action={logout}>
+              <button
+                type="submit"
+                className="rounded-xl bg-gray-700 px-4 py-2 transition hover:opacity-90"
+              >
+                Выйти
+              </button>
+            </form>
           </>
         ) : (
           <>
             <Link
               href="/login"
-              className="bg-gray-800 px-4 py-2 rounded-xl hover:opacity-90 transition"
+              className="rounded-xl bg-gray-800 px-4 py-2 transition hover:opacity-90"
             >
               Войти
             </Link>
 
             <Link
               href="/signup"
-              className="bg-gray-700 px-4 py-2 rounded-xl hover:opacity-90 transition"
+              className="rounded-xl bg-gray-700 px-4 py-2 transition hover:opacity-90"
             >
               Регистрация
             </Link>
@@ -107,5 +63,5 @@ export default function Header() {
         )}
       </div>
     </header>
-  ) 
+  )
 }
