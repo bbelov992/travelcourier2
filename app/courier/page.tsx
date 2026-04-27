@@ -1,3 +1,4 @@
+import ActiveOrderCard from "./ActiveOrderCard"
 import OrderCard from "./OrderCard"
 import { redirect } from "next/navigation"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
@@ -19,6 +20,19 @@ type Request = {
   description?: string | null
   weight?: number | null
   message?: string | null
+  status: string
+}
+
+type ActiveOrder = {
+  id: string
+  route_id: string
+  sender_id: string
+  sender_name?: string | null
+  contact?: string | null
+  description?: string | null
+  weight?: number | null
+  message?: string | null
+  request_id?: string | null
   status: string
 }
 
@@ -63,6 +77,23 @@ export default async function CourierPage() {
     : { data: [] }
 
   const typedRequests = (requests ?? []) as Request[]
+  const { data: orders } = routeIds.length
+    ? await supabase
+        .from("orders")
+        .select(
+          "id, route_id, sender_id, sender_name, contact, description, weight, message, request_id, status"
+        )
+        .in("route_id", routeIds)
+        .eq("status", "active")
+        .order("id", { ascending: false })
+    : { data: [] }
+
+  const typedOrders = (orders ?? []) as ActiveOrder[]
+  const activeOrderRequestIds = new Set(
+    typedOrders
+      .map((order) => order.request_id)
+      .filter((requestId): requestId is string => Boolean(requestId))
+  )
 
   return (
     <main className="min-h-screen bg-gray-100 px-6 py-12">
@@ -78,8 +109,19 @@ export default async function CourierPage() {
         )}
 
         {typedRoutes.map((route) => {
-          const routeRequests = typedRequests.filter(
-            (request) => request.route_id === route.id
+          const routeRequests = typedRequests.filter((request) => {
+            if (request.route_id !== route.id) {
+              return false
+            }
+
+            if (request.status === "pending") {
+              return true
+            }
+
+            return !activeOrderRequestIds.has(request.id)
+          })
+          const routeOrders = typedOrders.filter(
+            (order) => order.route_id === route.id
           )
 
           return (
@@ -91,13 +133,33 @@ export default async function CourierPage() {
                 {route.from_city} → {route.to_city}
               </h2>
 
-              {routeRequests?.length === 0 && (
-                <p className="text-gray-500">Нет заявок</p>
-              )}
+              <div className="mb-6">
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  Новые заявки
+                </h3>
 
-              {routeRequests?.map((request) => (
-                <OrderCard key={request.id} order={request} />
-              ))}
+                {routeRequests.length === 0 && (
+                  <p className="text-gray-500">Нет новых заявок</p>
+                )}
+
+                {routeRequests.map((request) => (
+                  <OrderCard key={request.id} order={request} />
+                ))}
+              </div>
+
+              <div>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  Активные заказы
+                </h3>
+
+                {routeOrders.length === 0 && (
+                  <p className="text-gray-500">Нет активных заказов</p>
+                )}
+
+                {routeOrders.map((order) => (
+                  <ActiveOrderCard key={order.id} order={order} />
+                ))}
+              </div>
             </div>
           )
         })}

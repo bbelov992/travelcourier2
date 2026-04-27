@@ -17,6 +17,19 @@ type SenderRequest = {
   created_at?: string | null
 }
 
+type SenderOrder = {
+  id: string
+  route_id: string | null
+  request_id?: string | null
+  sender_name?: string | null
+  contact?: string | null
+  description?: string | null
+  weight?: number | null
+  message?: string | null
+  status: string | null
+  created_at?: string | null
+}
+
 type RouteSummary = {
   id: string
   from_city: string | null
@@ -55,6 +68,7 @@ export default function SenderPage() {
   const router = useRouter()
   const [profileName, setProfileName] = useState<string | null>(null)
   const [requests, setRequests] = useState<SenderRequest[]>([])
+  const [orders, setOrders] = useState<SenderOrder[]>([])
   const [routesById, setRoutesById] = useState<Record<string, RouteSummary>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -97,13 +111,45 @@ export default function SenderPage() {
 
       const nextRequests = (requestsResult.data ?? []) as SenderRequest[]
       setRequests(nextRequests)
+
+      const ordersWithFullPayload = await supabase
+        .from("orders")
+        .select(
+          "id, route_id, request_id, sender_name, contact, description, weight, message, status, created_at"
+        )
+        .eq("sender_id", senderId)
+        .order("created_at", { ascending: false })
+
+      const ordersResult = ordersWithFullPayload.error &&
+        isSchemaMismatchError(ordersWithFullPayload.error)
+        ? await supabase
+            .from("orders")
+            .select("id, route_id, request_id, sender_name, description, message, status")
+            .eq("sender_id", senderId)
+            .order("id", { ascending: false })
+        : ordersWithFullPayload
+
+      if (cancelled) {
+        return
+      }
+
+      if (ordersResult.error) {
+        setError("Не удалось загрузить активные заказы: " + ordersResult.error.message)
+        setLoading(false)
+        return
+      }
+
+      const nextOrders = (ordersResult.data ?? []) as SenderOrder[]
+      setOrders(nextOrders)
       setError(null)
 
-      const routeIds = [...new Set(
-        nextRequests
-          .map((request) => request.route_id)
-          .filter((routeId): routeId is string => Boolean(routeId))
-      )]
+      const routeIds = [
+        ...new Set(
+          [...nextRequests, ...nextOrders]
+            .map((item) => item.route_id)
+            .filter((routeId): routeId is string => Boolean(routeId))
+        ),
+      ]
 
       if (routeIds.length === 0) {
         setRoutesById({})
@@ -203,6 +249,16 @@ export default function SenderPage() {
     }
   }, [router])
 
+  const activeOrders = orders.filter((order) => order.status === "active")
+  const requestIdsWithActiveOrders = new Set(
+    activeOrders
+      .map((order) => order.request_id)
+      .filter((requestId): requestId is string => Boolean(requestId))
+  )
+  const visibleRequests = requests.filter(
+    (request) => !requestIdsWithActiveOrders.has(request.id)
+  )
+
   return (
     <main className="min-h-screen bg-gray-100 px-6 py-12">
       <div className="mx-auto max-w-5xl">
@@ -241,7 +297,7 @@ export default function SenderPage() {
           </div>
         )}
 
-        {!loading && requests.length === 0 && (
+        {!loading && visibleRequests.length === 0 && activeOrders.length === 0 && (
           <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
             <h2 className="mb-2 text-xl font-semibold text-black">
               У вас пока нет заявок
@@ -261,114 +317,207 @@ export default function SenderPage() {
           </div>
         )}
 
-        {!loading && requests.length > 0 && (
-          <div className="space-y-4">
-            {requests.map((request) => {
-              const route = request.route_id
-                ? routesById[request.route_id]
-                : undefined
-              const statusLabel = request.status
-                ? statusLabels[request.status] ?? request.status
-                : "Неизвестно"
-              const statusStyle = request.status
-                ? statusStyles[request.status] ?? "bg-gray-100 text-gray-700"
-                : "bg-gray-100 text-gray-700"
+        {!loading && activeOrders.length > 0 && (
+          <div className="mb-8">
+            <h2 className="mb-4 text-xl font-semibold text-black">
+              Активные доставки
+            </h2>
 
-              return (
-                <div
-                  key={request.id}
-                  className="rounded-2xl bg-white p-6 shadow-sm"
-                >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <h2 className="text-xl font-semibold text-black">
-                        {route
-                          ? `${route.from_city ?? "—"} → ${route.to_city ?? "—"}`
-                          : "Маршрут больше недоступен"}
-                      </h2>
+            <div className="space-y-4">
+              {activeOrders.map((order) => {
+                const route = order.route_id ? routesById[order.route_id] : undefined
 
-                      <p className="mt-1 text-sm text-gray-500">
-                        Заявка #{String(request.id).slice(0, 8)}
-                      </p>
+                return (
+                  <div
+                    key={order.id}
+                    className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <h3 className="text-xl font-semibold text-black">
+                          {route
+                            ? `${route.from_city ?? "—"} → ${route.to_city ?? "—"}`
+                            : "Маршрут больше недоступен"}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-emerald-700">
+                          Заказ в работе
+                        </p>
+                      </div>
+
+                      <span className="inline-flex w-fit rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-800">
+                        Принята и в пути
+                      </span>
                     </div>
 
-                    <span
-                      className={`inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ${statusStyle}`}
-                    >
-                      {statusLabel}
-                    </span>
-                  </div>
+                    <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <div className="rounded-xl bg-white p-4">
+                        <p className="text-sm text-gray-500">Курьер</p>
+                        <p className="mt-1 font-medium text-black">
+                          {route?.courier_name ?? "—"}
+                        </p>
+                      </div>
 
-                  <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-xl bg-gray-50 p-4">
-                      <p className="text-sm text-gray-500">Курьер</p>
-                      <p className="mt-1 font-medium text-black">
-                        {route?.courier_name ?? "—"}
-                      </p>
+                      <div className="rounded-xl bg-white p-4">
+                        <p className="text-sm text-gray-500">Дата вылета</p>
+                        <p className="mt-1 font-medium text-black">
+                          {route?.departure_date
+                            ? new Date(route.departure_date).toLocaleDateString(
+                                "ru-RU"
+                              )
+                            : "—"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-white p-4">
+                        <p className="text-sm text-gray-500">Контакт</p>
+                        <p className="mt-1 text-black">
+                          {order.contact || "Не указан"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-white p-4">
+                        <p className="text-sm text-gray-500">Вес</p>
+                        <p className="mt-1 font-medium text-black">
+                          {order.weight ? `${order.weight} кг` : "Не указан"}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="rounded-xl bg-gray-50 p-4">
-                      <p className="text-sm text-gray-500">Дата вылета</p>
-                      <p className="mt-1 font-medium text-black">
-                        {route?.departure_date
-                          ? new Date(route.departure_date).toLocaleDateString(
-                              "ru-RU"
-                            )
-                          : "—"}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-gray-50 p-4">
-                      <p className="text-sm text-gray-500">Вес</p>
-                      <p className="mt-1 font-medium text-black">
-                        {request.weight ? `${request.weight} кг` : "Не указан"}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-gray-50 p-4">
-                      <p className="text-sm text-gray-500">Отправлена</p>
-                      <p className="mt-1 font-medium text-black">
-                        {request.created_at
-                          ? new Date(request.created_at).toLocaleDateString(
-                              "ru-RU"
-                            )
-                          : "—"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl bg-gray-50 p-4">
-                      <p className="text-sm text-gray-500">Контакт</p>
+                    <div className="mt-4 rounded-xl bg-white p-4">
+                      <p className="text-sm text-gray-500">Описание посылки</p>
                       <p className="mt-1 text-black">
-                        {request.contact || "Не указан"}
+                        {order.description || "Описание не добавлено"}
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-gray-50 p-4">
-                      <p className="text-sm text-gray-500">Имя в заявке</p>
+                    <div className="mt-4 rounded-xl bg-white p-4">
+                      <p className="text-sm text-gray-500">Комментарий</p>
                       <p className="mt-1 text-black">
-                        {request.sender_name || profileName || "—"}
+                        {order.message || "Комментарий не добавлен"}
                       </p>
                     </div>
                   </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
-                  <div className="mt-4 rounded-xl bg-gray-50 p-4">
-                    <p className="text-sm text-gray-500">Описание посылки</p>
-                    <p className="mt-1 text-black">
-                      {request.description || "Описание не добавлено"}
-                    </p>
-                  </div>
+        {!loading && visibleRequests.length > 0 && (
+          <div>
+            <h2 className="mb-4 text-xl font-semibold text-black">
+              Заявки
+            </h2>
 
-                  <div className="mt-4 rounded-xl bg-gray-50 p-4">
-                    <p className="text-sm text-gray-500">Комментарий</p>
-                    <p className="mt-1 text-black">
-                      {request.message || "Комментарий не добавлен"}
-                    </p>
+            <div className="space-y-4">
+              {visibleRequests.map((request) => {
+                const route = request.route_id
+                  ? routesById[request.route_id]
+                  : undefined
+                const statusLabel = request.status
+                  ? statusLabels[request.status] ?? request.status
+                  : "Неизвестно"
+                const statusStyle = request.status
+                  ? statusStyles[request.status] ?? "bg-gray-100 text-gray-700"
+                  : "bg-gray-100 text-gray-700"
+
+                return (
+                  <div
+                    key={request.id}
+                    className="rounded-2xl bg-white p-6 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <h2 className="text-xl font-semibold text-black">
+                          {route
+                            ? `${route.from_city ?? "—"} → ${route.to_city ?? "—"}`
+                            : "Маршрут больше недоступен"}
+                        </h2>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                          Заявка #{String(request.id).slice(0, 8)}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ${statusStyle}`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
+
+                    <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <p className="text-sm text-gray-500">Курьер</p>
+                        <p className="mt-1 font-medium text-black">
+                          {route?.courier_name ?? "—"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <p className="text-sm text-gray-500">Дата вылета</p>
+                        <p className="mt-1 font-medium text-black">
+                          {route?.departure_date
+                            ? new Date(route.departure_date).toLocaleDateString(
+                                "ru-RU"
+                              )
+                            : "—"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <p className="text-sm text-gray-500">Вес</p>
+                        <p className="mt-1 font-medium text-black">
+                          {request.weight ? `${request.weight} кг` : "Не указан"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <p className="text-sm text-gray-500">Отправлена</p>
+                        <p className="mt-1 font-medium text-black">
+                          {request.created_at
+                            ? new Date(request.created_at).toLocaleDateString(
+                                "ru-RU"
+                              )
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <p className="text-sm text-gray-500">Контакт</p>
+                        <p className="mt-1 text-black">
+                          {request.contact || "Не указан"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <p className="text-sm text-gray-500">Имя в заявке</p>
+                        <p className="mt-1 text-black">
+                          {request.sender_name || profileName || "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-xl bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">Описание посылки</p>
+                      <p className="mt-1 text-black">
+                        {request.description || "Описание не добавлено"}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 rounded-xl bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">Комментарий</p>
+                      <p className="mt-1 text-black">
+                        {request.message || "Комментарий не добавлен"}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         )}
       </div>
