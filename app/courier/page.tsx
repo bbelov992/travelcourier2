@@ -80,20 +80,44 @@ export default async function CourierPage() {
   const { data: orders } = routeIds.length
     ? await supabase
         .from("orders")
-        .select(
-          "id, route_id, sender_id, sender_name, contact, description, weight, message, request_id, status"
-        )
+        .select("*")
         .in("route_id", routeIds)
         .eq("status", "active")
         .order("id", { ascending: false })
     : { data: [] }
 
-  const typedOrders = (orders ?? []) as ActiveOrder[]
+  const rawOrders = (orders ?? []) as ActiveOrder[]
   const activeOrderRequestIds = new Set(
-    typedOrders
+    rawOrders
       .map((order) => order.request_id)
       .filter((requestId): requestId is string => Boolean(requestId))
   )
+  const { data: linkedRequests } = activeOrderRequestIds.size
+    ? await supabase
+        .from("requests")
+        .select(
+          "id, route_id, sender_name, contact, description, weight, message"
+        )
+        .in("id", [...activeOrderRequestIds])
+    : { data: [] }
+
+  const linkedRequestsById = Object.fromEntries(
+    ((linkedRequests ?? []) as Request[]).map((request) => [request.id, request])
+  )
+  const typedOrders = rawOrders.map((order) => {
+    const linkedRequest =
+      order.request_id ? linkedRequestsById[order.request_id] : undefined
+
+    return {
+      ...order,
+      route_id: order.route_id ?? linkedRequest?.route_id ?? "",
+      sender_name: order.sender_name ?? linkedRequest?.sender_name ?? null,
+      contact: order.contact ?? linkedRequest?.contact ?? null,
+      description: order.description ?? linkedRequest?.description ?? null,
+      weight: order.weight ?? linkedRequest?.weight ?? null,
+      message: order.message ?? linkedRequest?.message ?? null,
+    }
+  })
 
   return (
     <main className="min-h-screen bg-gray-100 px-6 py-12">

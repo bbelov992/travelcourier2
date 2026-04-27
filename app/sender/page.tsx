@@ -112,22 +112,11 @@ export default function SenderPage() {
       const nextRequests = (requestsResult.data ?? []) as SenderRequest[]
       setRequests(nextRequests)
 
-      const ordersWithFullPayload = await supabase
+      const ordersResult = await supabase
         .from("orders")
-        .select(
-          "id, route_id, request_id, sender_name, contact, description, weight, message, status, created_at"
-        )
+        .select("*")
         .eq("sender_id", senderId)
-        .order("created_at", { ascending: false })
-
-      const ordersResult = ordersWithFullPayload.error &&
-        isSchemaMismatchError(ordersWithFullPayload.error)
-        ? await supabase
-            .from("orders")
-            .select("id, route_id, request_id, sender_name, description, message, status")
-            .eq("sender_id", senderId)
-            .order("id", { ascending: false })
-        : ordersWithFullPayload
+        .order("id", { ascending: false })
 
       if (cancelled) {
         return
@@ -139,7 +128,44 @@ export default function SenderPage() {
         return
       }
 
-      const nextOrders = (ordersResult.data ?? []) as SenderOrder[]
+      const rawOrders = (ordersResult.data ?? []) as SenderOrder[]
+      const orderRequestIds = rawOrders
+        .map((order) => order.request_id)
+        .filter((requestId): requestId is string => Boolean(requestId))
+      const { data: linkedRequests } = orderRequestIds.length
+        ? await supabase
+            .from("requests")
+            .select(
+              "id, route_id, sender_name, contact, description, weight, message, created_at"
+            )
+            .in("id", orderRequestIds)
+        : { data: [] }
+
+      if (cancelled) {
+        return
+      }
+
+      const linkedRequestsById = Object.fromEntries(
+        ((linkedRequests ?? []) as SenderRequest[]).map((request) => [
+          request.id,
+          request,
+        ])
+      )
+      const nextOrders = rawOrders.map((order) => {
+        const linkedRequest =
+          order.request_id ? linkedRequestsById[order.request_id] : undefined
+
+        return {
+          ...order,
+          route_id: order.route_id ?? linkedRequest?.route_id ?? null,
+          sender_name: order.sender_name ?? linkedRequest?.sender_name ?? null,
+          contact: order.contact ?? linkedRequest?.contact ?? null,
+          description: order.description ?? linkedRequest?.description ?? null,
+          weight: order.weight ?? linkedRequest?.weight ?? null,
+          message: order.message ?? linkedRequest?.message ?? null,
+          created_at: order.created_at ?? linkedRequest?.created_at ?? null,
+        }
+      })
       setOrders(nextOrders)
       setError(null)
 

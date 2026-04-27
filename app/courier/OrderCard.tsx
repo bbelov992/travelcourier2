@@ -35,6 +35,59 @@ function isSchemaMismatchError(error: { code?: string; message?: string } | null
   )
 }
 
+async function insertOrderWithFallbacks(order: Order) {
+  const payloads = [
+    {
+      route_id: order.route_id,
+      sender_id: order.sender_id,
+      sender_name: order.sender_name ?? null,
+      contact: order.contact ?? null,
+      description: order.description ?? null,
+      weight: order.weight ?? null,
+      message: order.message ?? null,
+      status: "active",
+      request_id: order.id,
+    },
+    {
+      route_id: order.route_id,
+      sender_id: order.sender_id,
+      description: order.description ?? null,
+      message: order.message ?? null,
+      status: "active",
+      request_id: order.id,
+    },
+    {
+      route_id: order.route_id,
+      sender_id: order.sender_id,
+      status: "active",
+      request_id: order.id,
+    },
+    {
+      route_id: order.route_id,
+      sender_id: order.sender_id,
+      status: "active",
+    },
+  ]
+
+  let lastError: { message?: string } | null = null
+
+  for (const payload of payloads) {
+    const { error } = await supabase.from("orders").insert(payload)
+
+    if (!error) {
+      return null
+    }
+
+    lastError = error
+
+    if (!isSchemaMismatchError(error)) {
+      return error
+    }
+  }
+
+  return lastError
+}
+
 export default function OrderCard({ order }: { order: Order }) {
   const [loading, setLoading] = useState(false)
 
@@ -54,31 +107,7 @@ export default function OrderCard({ order }: { order: Order }) {
     }
 
     // 2. Create order record
-    let { error: orderError } = await supabase.from("orders").insert({
-      route_id: order.route_id,
-      sender_id: order.sender_id,
-      sender_name: order.sender_name ?? null,
-      contact: order.contact ?? null,
-      description: order.description ?? null,
-      weight: order.weight ?? null,
-      message: order.message ?? null,
-      status: "active",
-      request_id: order.id,
-    })
-
-    if (orderError && isSchemaMismatchError(orderError)) {
-      const fallbackInsert = await supabase.from("orders").insert({
-        route_id: order.route_id,
-        sender_id: order.sender_id,
-        sender_name: order.sender_name ?? null,
-        description: order.description ?? null,
-        message: order.message ?? null,
-        status: "active",
-        request_id: order.id,
-      })
-
-      orderError = fallbackInsert.error
-    }
+    const orderError = await insertOrderWithFallbacks(order)
 
     if (orderError) {
       alert("Ошибка создания ордера: " + orderError.message)
