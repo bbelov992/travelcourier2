@@ -4,10 +4,42 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
+type RequestForm = {
+  sender_name: string
+  contact: string
+  description: string
+  weight: string
+  comment: string
+}
+
+function isSchemaMismatchError(error: { code?: string; message?: string } | null) {
+  if (!error) {
+    return false
+  }
+
+  const details = `${error.code ?? ''} ${error.message ?? ''}`.toLowerCase()
+
+  return (
+    details.includes('pgrst204') ||
+    details.includes('schema cache') ||
+    details.includes('column')
+  )
+}
+
+function getSchemaMismatchMessage(error: { message?: string } | null) {
+  const details = error?.message ? `\n\nТехническая ошибка: ${error.message}` : ""
+
+  return (
+    "Не удалось сохранить все поля заявки. Скорее всего, Supabase schema для таблицы requests обновлена не полностью. " +
+    "Сначала заново выполните SQL-миграцию, иначе имя, контакт и описание будут теряться." +
+    details
+  )
+}
+
 export default function CreateRequestPage() {
   const { id: routeId } = useParams() as { id: string }
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RequestForm>({
     sender_name: '',
     contact: '',
     description: '',
@@ -30,6 +62,12 @@ export default function CreateRequestPage() {
 
     const validRouteId = /^[0-9a-fA-F-]{36}$/.test(routeId) ? routeId : null
 
+    if (!validRouteId) {
+      alert('Маршрут не найден или ссылка повреждена')
+      setLoading(false)
+      return
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -40,28 +78,41 @@ export default function CreateRequestPage() {
       return
     }
 
-    const { error } = await supabase.from('requests').insert({
+    const requestPayload = {
       route_id: validRouteId,
       sender_id: user.id,
+      sender_name: form.sender_name.trim() || null,
+      contact: form.contact.trim() || null,
+      description: form.description.trim() || null,
       weight: form.weight ? Number(form.weight) : null,
-      message: form.comment || null,
+      message: form.comment.trim() || null,
       status: 'pending',
-    })
+    }
 
-    setLoading(false)
+    const { error } = await supabase.from('requests').insert(requestPayload)
 
     if (error) {
+      console.error('Request insert failed', error)
+      setLoading(false)
+
+      if (isSchemaMismatchError(error)) {
+        alert(getSchemaMismatchMessage(error))
+        return
+      }
+
       alert('Ошибка при отправке заявки: ' + error.message)
-    } else {
-      setSuccess(true)
-      setForm({
-        sender_name: '',
-        contact: '',
-        description: '',
-        weight: '',
-        comment: '',
-      })
+      return
     }
+
+    setLoading(false)
+    setSuccess(true)
+    setForm({
+      sender_name: '',
+      contact: '',
+      description: '',
+      weight: '',
+      comment: '',
+    })
   }
 
   if (success) {
@@ -83,10 +134,17 @@ export default function CreateRequestPage() {
           <p className="text-black mb-6">
             Курьер получит уведомление и свяжется с вами.
           </p>
+
+          <button
+            onClick={() => (window.location.href = "/sender")}
+            className="mb-3 w-full bg-black text-white py-3 rounded-xl hover:opacity-90 transition"
+          >
+            Перейти в кабинет отправителя
+          </button>
   
           <button
             onClick={() => (window.location.href = "/")}
-            className="w-full bg-black text-white py-3 rounded-xl hover:opacity-90 transition"
+            className="w-full bg-gray-100 text-black py-3 rounded-xl hover:opacity-90 transition"
           >
             Вернуться на главную
           </button>
