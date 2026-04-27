@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { type FormEvent, useMemo, useState } from "react"
 
 type RouteCard = {
   id: string
@@ -21,32 +21,57 @@ export default function HomePageClient({
   initialRoutes,
   loadError,
 }: HomePageClientProps) {
-  const [fromFilter, setFromFilter] = useState("")
-  const [toFilter, setToFilter] = useState("")
-  const [dateFilter, setDateFilter] = useState("")
+  const [draftFilters, setDraftFilters] = useState({
+    from: "",
+    to: "",
+    date: "",
+  })
+  const [activeFilters, setActiveFilters] = useState({
+    from: "",
+    to: "",
+    date: "",
+  })
 
   const filteredRoutes = useMemo(() => {
     return initialRoutes.filter((route) => {
       const matchFrom =
-        !fromFilter ||
-        route.from_city.toLowerCase().includes(fromFilter.toLowerCase())
+        !activeFilters.from ||
+        route.from_city.toLowerCase().includes(activeFilters.from.toLowerCase())
 
       const matchTo =
-        !toFilter ||
-        route.to_city.toLowerCase().includes(toFilter.toLowerCase())
+        !activeFilters.to ||
+        route.to_city.toLowerCase().includes(activeFilters.to.toLowerCase())
 
-      const matchDate = !dateFilter || route.departure_date === dateFilter
+      const matchDate =
+        !activeFilters.date || route.departure_date === activeFilters.date
 
       return matchFrom && matchTo && matchDate
     })
-  }, [dateFilter, fromFilter, initialRoutes, toFilter])
+  }, [activeFilters, initialRoutes])
 
-  const hasFilters = Boolean(fromFilter || toFilter || dateFilter)
+  const hasFilters = Boolean(
+    draftFilters.from ||
+      draftFilters.to ||
+      draftFilters.date ||
+      activeFilters.from ||
+      activeFilters.to ||
+      activeFilters.date
+  )
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setActiveFilters(draftFilters)
+  }
 
   const resetFilters = () => {
-    setFromFilter("")
-    setToFilter("")
-    setDateFilter("")
+    const emptyFilters = {
+      from: "",
+      to: "",
+      date: "",
+    }
+
+    setDraftFilters(emptyFilters)
+    setActiveFilters(emptyFilters)
   }
 
   return (
@@ -61,37 +86,64 @@ export default function HomePageClient({
         </p>
 
         <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="grid flex-1 gap-4 rounded-2xl bg-white p-6 shadow-md md:grid-cols-4">
+          <form
+            onSubmit={handleSearch}
+            className="grid flex-1 gap-4 rounded-2xl bg-white p-6 shadow-md md:grid-cols-4"
+          >
             <input
               placeholder="Откуда"
-              value={fromFilter}
-              onChange={(event) => setFromFilter(event.target.value)}
+              value={draftFilters.from}
+              onChange={(event) =>
+                setDraftFilters((current) => ({
+                  ...current,
+                  from: event.target.value,
+                }))
+              }
               className="rounded-xl border px-4 py-3 text-black placeholder-black"
             />
 
             <input
               placeholder="Куда"
-              value={toFilter}
-              onChange={(event) => setToFilter(event.target.value)}
+              value={draftFilters.to}
+              onChange={(event) =>
+                setDraftFilters((current) => ({
+                  ...current,
+                  to: event.target.value,
+                }))
+              }
               className="rounded-xl border px-4 py-3 text-black placeholder-black"
             />
 
             <input
               type="date"
-              value={dateFilter}
-              onChange={(event) => setDateFilter(event.target.value)}
+              value={draftFilters.date}
+              onChange={(event) =>
+                setDraftFilters((current) => ({
+                  ...current,
+                  date: event.target.value,
+                }))
+              }
               className="rounded-xl border px-4 py-3 text-black"
             />
 
-            <button
-              type="button"
-              onClick={resetFilters}
-              disabled={!hasFilters}
-              className="rounded-xl bg-black py-3 text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Сбросить
-            </button>
-          </div>
+            <div className="grid gap-2">
+              <button
+                type="submit"
+                className="rounded-xl bg-black py-3 text-white transition hover:opacity-90"
+              >
+                Найти
+              </button>
+
+              <button
+                type="button"
+                onClick={resetFilters}
+                disabled={!hasFilters}
+                className="rounded-xl border border-gray-300 py-3 text-black transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Сбросить
+              </button>
+            </div>
+          </form>
 
           <Link
             href="/create-route"
