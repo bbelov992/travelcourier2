@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import HeaderHomeLink from '@/components/HeaderHomeLink'
 
 export default async function Header() {
   async function logout() {
@@ -18,12 +19,9 @@ export default async function Header() {
 
   return (
     <header className="flex items-center justify-between bg-black px-6 py-4 text-white">
-      <Link
-        href="/"
-        className="rounded-xl bg-gray-800 px-4 py-2 transition hover:opacity-90"
-      >
-        На главную
-      </Link>
+      <div className="min-w-[118px]">
+        <HeaderHomeLink />
+      </div>
 
       <div className="flex gap-3">
         {session ? (
