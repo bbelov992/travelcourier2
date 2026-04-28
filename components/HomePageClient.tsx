@@ -223,7 +223,7 @@ export default function HomePageClient({
 
                 <button
                   type="submit"
-                  className="rounded-2xl bg-[#ff8743] px-4 py-3 font-medium text-white transition hover:brightness-95"
+                  className="rounded-2xl bg-[#2e6bff] px-4 py-3 font-medium text-white transition hover:bg-[#2555cc]"
                 >
                   Найти маршрут
                 </button>
