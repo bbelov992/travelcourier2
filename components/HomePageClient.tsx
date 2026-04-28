@@ -179,10 +179,6 @@ export default function HomePageClient({
                       : "Смотрите рынок как отправитель и переключайтесь в режим курьера ниже"}
                   </h2>
                 </div>
-
-                <div className="rounded-2xl bg-[#f4f7ff] px-4 py-3 text-sm text-[#405072]">
-                  Маршрутов в каталоге: {initialRoutes.length}
-                </div>
               </div>
 
               <div className="grid gap-3 md:grid-cols-4">
@@ -242,12 +238,6 @@ export default function HomePageClient({
                 >
                   Сбросить фильтры
                 </button>
-
-                <p className="text-sm text-[#5a6a93]">
-                  {mode === "sender"
-                    ? "Ниже вы увидите доступные маршруты и сможете сразу отправить заявку."
-                    : "Ниже переключается блок для курьера: маршрут, заявки и вход в кабинет."}
-                </p>
               </div>
             </form>
           </div>
