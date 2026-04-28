@@ -12,6 +12,14 @@ type RequestForm = {
   comment: string
 }
 
+type SavedRequest = {
+  id: string
+  sender_name: string | null
+  contact: string | null
+  description: string | null
+  message: string | null
+}
+
 function isSchemaMismatchError(error: { code?: string; message?: string } | null) {
   if (!error) {
     return false
@@ -33,6 +41,32 @@ function getSchemaMismatchMessage(error: { message?: string } | null) {
     "Не удалось сохранить все поля заявки. Скорее всего, Supabase schema для таблицы requests обновлена не полностью. " +
     "Сначала заново выполните SQL-миграцию, иначе имя, контакт и описание будут теряться." +
     details
+  )
+}
+
+function normalizeOptionalText(value: string) {
+  const trimmedValue = value.trim()
+  return trimmedValue ? trimmedValue : null
+}
+
+function hasMissingCoreRequestFields(
+  savedRequest: SavedRequest | null,
+  requestPayload: {
+    sender_name: string | null
+    contact: string | null
+    description: string | null
+    message: string | null
+  }
+) {
+  if (!savedRequest) {
+    return true
+  }
+
+  return (
+    savedRequest.sender_name !== requestPayload.sender_name ||
+    savedRequest.contact !== requestPayload.contact ||
+    savedRequest.description !== requestPayload.description ||
+    savedRequest.message !== requestPayload.message
   )
 }
 
@@ -81,15 +115,19 @@ export default function CreateRequestPage() {
     const requestPayload = {
       route_id: validRouteId,
       sender_id: user.id,
-      sender_name: form.sender_name.trim() || null,
-      contact: form.contact.trim() || null,
-      description: form.description.trim() || null,
+      sender_name: normalizeOptionalText(form.sender_name),
+      contact: normalizeOptionalText(form.contact),
+      description: normalizeOptionalText(form.description),
       weight: form.weight ? Number(form.weight) : null,
-      message: form.comment.trim() || null,
+      message: normalizeOptionalText(form.comment),
       status: 'pending',
     }
 
-    const { error } = await supabase.from('requests').insert(requestPayload)
+    const { data: insertedRequest, error } = await supabase
+      .from('requests')
+      .insert(requestPayload)
+      .select('id, sender_name, contact, description, message')
+      .single()
 
     if (error) {
       console.error('Request insert failed', error)
@@ -102,6 +140,48 @@ export default function CreateRequestPage() {
 
       alert('Ошибка при отправке заявки: ' + error.message)
       return
+    }
+
+    if (hasMissingCoreRequestFields(insertedRequest, requestPayload)) {
+      console.error('Request insert lost fields', {
+        requestPayload,
+        insertedRequest,
+      })
+
+      const { data: repairedRequest, error: repairError } = await supabase
+        .from('requests')
+        .update({
+          sender_name: requestPayload.sender_name,
+          contact: requestPayload.contact,
+          description: requestPayload.description,
+          message: requestPayload.message,
+        })
+        .eq('id', insertedRequest.id)
+        .select('id, sender_name, contact, description, message')
+        .single()
+
+      if (repairError) {
+        console.error('Request repair failed', repairError)
+        setLoading(false)
+        alert(
+          'Заявка создалась, но имя, контакт или описание сохранились не полностью. ' +
+            'Проверь Supabase schema и не принимай эту заявку, пока проблема не исправлена.'
+        )
+        return
+      }
+
+      if (hasMissingCoreRequestFields(repairedRequest, requestPayload)) {
+        console.error('Request repair still missing fields', {
+          requestPayload,
+          repairedRequest,
+        })
+        setLoading(false)
+        alert(
+          'Заявка создалась, но данные отправителя сохранились не полностью. ' +
+            'Проверь Supabase schema и отправь заявку заново после фикса.'
+        )
+        return
+      }
     }
 
     setLoading(false)

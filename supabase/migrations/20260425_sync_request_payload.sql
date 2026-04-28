@@ -64,3 +64,4 @@ create index if not exists requests_sender_status_idx
 
 create index if not exists requests_route_status_idx
   on public.requests (route_id, status);
+

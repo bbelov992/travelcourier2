@@ -5,6 +5,20 @@ import { createSupabaseServerClient } from "@/lib/supabase-server"
 
 export const dynamic = "force-dynamic"
 
+function isSchemaMismatchError(error: { code?: string; message?: string } | null) {
+  if (!error) {
+    return false
+  }
+
+  const details = `${error.code ?? ""} ${error.message ?? ""}`.toLowerCase()
+
+  return (
+    details.includes("pgrst204") ||
+    details.includes("schema cache") ||
+    details.includes("column")
+  )
+}
+
 type Route = {
   id: string
   from_city: string
@@ -67,26 +81,52 @@ export default async function CourierPage() {
 
   const routeIds = typedRoutes.map((route) => route.id)
 
-  const { data: requests } = routeIds.length
+  const requestsWithFullPayload = routeIds.length
     ? await supabase
         .from("requests")
-        .select("*")
+        .select(
+          "id, route_id, sender_id, sender_name, contact, description, weight, message, status"
+        )
         .in("route_id", routeIds)
         .in("status", ["pending", "accepted"])
         .order("id", { ascending: false })
-    : { data: [] }
+    : { data: [], error: null }
 
-  const typedRequests = (requests ?? []) as Request[]
-  const { data: orders } = routeIds.length
+  const requestsResult =
+    requestsWithFullPayload.error &&
+    isSchemaMismatchError(requestsWithFullPayload.error)
+      ? await supabase
+          .from("requests")
+          .select("id, route_id, sender_id, weight, message, status")
+          .in("route_id", routeIds)
+          .in("status", ["pending", "accepted"])
+          .order("id", { ascending: false })
+      : requestsWithFullPayload
+
+  const typedRequests = (requestsResult.data ?? []) as Request[]
+  const ordersWithFullPayload = routeIds.length
     ? await supabase
         .from("orders")
-        .select("*")
+        .select(
+          "id, route_id, sender_id, sender_name, contact, description, weight, message, request_id, status"
+        )
         .in("route_id", routeIds)
         .eq("status", "active")
         .order("id", { ascending: false })
-    : { data: [] }
+    : { data: [], error: null }
 
-  const rawOrders = (orders ?? []) as ActiveOrder[]
+  const ordersResult =
+    ordersWithFullPayload.error &&
+    isSchemaMismatchError(ordersWithFullPayload.error)
+      ? await supabase
+          .from("orders")
+          .select("id, route_id, sender_id, request_id, status")
+          .in("route_id", routeIds)
+          .eq("status", "active")
+          .order("id", { ascending: false })
+      : ordersWithFullPayload
+
+  const rawOrders = (ordersResult.data ?? []) as ActiveOrder[]
   const activeOrderRequestIds = new Set(
     rawOrders
       .map((order) => order.request_id)
