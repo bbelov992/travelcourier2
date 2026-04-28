@@ -286,49 +286,53 @@ export default function HomePageClient({
                 {filteredRoutes.map((route) => (
                   <div
                     key={route.id}
-                    className="grid gap-4 rounded-[28px] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:grid-cols-[1fr_auto]"
+                    className="grid gap-5 rounded-[28px] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:grid-cols-[minmax(0,1fr)_280px] md:items-start"
                   >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h3 className="text-xl font-semibold text-[#0f172f]">
+                    <div className="flex h-full flex-col justify-between">
+                      <div>
+                        <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#5a6a93]">
+                          Маршрут
+                        </p>
+                        <h3 className="mt-3 text-2xl font-semibold text-[#0f172f] sm:text-3xl">
                           {route.from_city} → {route.to_city}
                         </h3>
-                        <span className="rounded-full bg-[#eff4ff] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#1d47b7]">
-                          {formatDepartureDate(route.departure_date)}
-                        </span>
+                        <p className="mt-3 max-w-xl text-sm leading-6 text-[#5a6a93]">
+                          Заявка отправляется через платформу, а контакт курьера
+                          откроется после принятия.
+                        </p>
                       </div>
 
-                      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-2xl bg-[#f7f9ff] p-4">
-                          <p className="text-sm text-[#5a6a93]">Курьер</p>
-                          <p className="mt-1 font-medium text-[#0f172f]">
-                            {route.courier_name || "Не указан"}
-                          </p>
-                        </div>
-
-                        <div className="rounded-2xl bg-[#f7f9ff] p-4">
-                          <p className="text-sm text-[#5a6a93]">Макс. вес</p>
-                          <p className="mt-1 font-medium text-[#0f172f]">
-                            {route.max_weight ? `${route.max_weight} кг` : "Не указан"}
-                          </p>
-                        </div>
-
-                        <div className="rounded-2xl bg-[#f7f9ff] p-4">
-                          <p className="text-sm text-[#5a6a93]">Формат</p>
-                          <p className="mt-1 font-medium text-[#0f172f]">
-                            Заявка через платформу
-                          </p>
-                        </div>
+                      <div className="mt-5">
+                        <Link
+                          href={`/route/${route.id}/request`}
+                          className="inline-flex rounded-2xl bg-[#0f172f] px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
+                        >
+                          Оставить заявку
+                        </Link>
                       </div>
                     </div>
 
-                    <div className="flex items-end md:items-center">
-                      <Link
-                        href={`/route/${route.id}/request`}
-                        className="inline-flex rounded-2xl bg-[#0f172f] px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
-                      >
-                        Оставить заявку
-                      </Link>
+                    <div className="rounded-[24px] bg-[#f7f9ff] p-5">
+                      <div>
+                        <p className="text-sm text-[#5a6a93]">Курьер</p>
+                        <p className="mt-1 text-base font-medium text-[#0f172f]">
+                          {route.courier_name || "Не указан"}
+                        </p>
+                      </div>
+
+                      <div className="mt-4">
+                        <p className="text-sm text-[#5a6a93]">Дата вылета</p>
+                        <p className="mt-1 text-base font-medium text-[#0f172f]">
+                          {formatDepartureDate(route.departure_date)}
+                        </p>
+                      </div>
+
+                      <div className="mt-4">
+                        <p className="text-sm text-[#5a6a93]">Максимальный вес</p>
+                        <p className="mt-1 text-base font-medium text-[#0f172f]">
+                          {route.max_weight ? `${route.max_weight} кг` : "Не указан"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}
