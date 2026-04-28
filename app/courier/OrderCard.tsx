@@ -156,7 +156,11 @@ export default function OrderCard({ order }: { order: Order }) {
 
         <div className="rounded-xl bg-gray-50 p-3">
           <p className="text-sm text-gray-500">Контакт</p>
-          <p className="mt-1 text-black">{order.contact || "Не указан"}</p>
+          <p className="mt-1 text-black">
+            {order.status === "pending"
+              ? "Скрыт до принятия заявки"
+              : order.contact || "Не указан"}
+          </p>
         </div>
 
         <div className="rounded-xl bg-gray-50 p-3">
