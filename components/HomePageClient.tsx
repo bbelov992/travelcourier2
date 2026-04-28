@@ -294,9 +294,9 @@ export default function HomePageClient({
                       </p>
                     </div>
 
-                    <div className="grid gap-1 text-sm text-[#0f172f] md:min-w-[240px]">
-                      <p>{route.courier_name || "Не указан"}</p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#0f172f] md:min-w-[240px] md:justify-end">
                       <p>{formatDepartureDate(route.departure_date)}</p>
+                      <p>{route.courier_name || "Не указан"}</p>
                       <p>{route.max_weight ? `${route.max_weight} кг` : "Не указан"}</p>
                     </div>
 
