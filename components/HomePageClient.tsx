@@ -294,19 +294,10 @@ export default function HomePageClient({
                       </p>
                     </div>
 
-                    <div className="grid gap-1 text-sm text-[#405072] md:min-w-[240px]">
-                      <p>
-                        <span className="font-medium text-[#0f172f]">Курьер:</span>{" "}
-                        {route.courier_name || "Не указан"}
-                      </p>
-                      <p>
-                        <span className="font-medium text-[#0f172f]">Дата:</span>{" "}
-                        {formatDepartureDate(route.departure_date)}
-                      </p>
-                      <p>
-                        <span className="font-medium text-[#0f172f]">Вес:</span>{" "}
-                        {route.max_weight ? `${route.max_weight} кг` : "Не указан"}
-                      </p>
+                    <div className="grid gap-1 text-sm text-[#0f172f] md:min-w-[240px]">
+                      <p>{route.courier_name || "Не указан"}</p>
+                      <p>{formatDepartureDate(route.departure_date)}</p>
+                      <p>{route.max_weight ? `${route.max_weight} кг` : "Не указан"}</p>
                     </div>
 
                     <Link
