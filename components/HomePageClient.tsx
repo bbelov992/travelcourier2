@@ -130,18 +130,9 @@ export default function HomePageClient({
           <div className="absolute bottom-0 left-12 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
 
           <div className="relative mx-auto max-w-4xl">
-            <p className="text-center text-sm font-medium uppercase tracking-[0.2em] text-white/72">
-              Доставка через путешественников
-            </p>
-
-            <h1 className="mt-4 text-center text-3xl font-semibold leading-tight sm:text-4xl">
+            <h1 className="text-center text-3xl font-semibold leading-tight sm:text-4xl">
               Найди подходящий маршрут для своей посылки
             </h1>
-
-            <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-white/80 sm:text-base">
-              Переключайтесь между ролями и смотрите сценарий, который подходит
-              именно вам: поиск маршрута для отправки или работа в роли курьера.
-            </p>
 
             <div className="mt-7 flex justify-center">
               <div className="inline-flex rounded-2xl bg-[#2555cc] p-1 shadow-lg shadow-black/10 backdrop-blur">
