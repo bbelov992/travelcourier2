@@ -13,7 +13,7 @@ export default function HeaderHomeLink() {
   return (
     <Link
       href="/"
-      className="rounded-xl bg-gray-800 px-4 py-2 transition hover:opacity-90"
+      className="rounded-xl border border-white/25 bg-white/12 px-4 py-2 font-medium text-white transition hover:bg-white/18"
     >
       На главную
     </Link>
