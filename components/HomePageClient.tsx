@@ -255,17 +255,6 @@ export default function HomePageClient({
 
         {mode === "sender" ? (
           <section id="routes" className="space-y-5">
-            <div className="grid gap-3 md:grid-cols-3">
-              {senderHighlights.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[24px] bg-white p-5 text-sm font-medium leading-6 text-[#0f172f] shadow-sm"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#5a6a93]">
@@ -355,6 +344,17 @@ export default function HomePageClient({
                 ))}
               </div>
             )}
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {senderHighlights.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[24px] bg-white p-5 text-sm font-medium leading-6 text-[#0f172f] shadow-sm"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
           </section>
         ) : (
           <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
