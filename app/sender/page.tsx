@@ -476,11 +476,11 @@ export default function SenderPage() {
                           disabled={updatingOrderId === order.id}
                           className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
                         >
-                          Подтвердить получение
+                          Получил посылку
                         </button>
 
                         <p className="text-sm text-amber-800">
-                          Курьер отметил доставку. Подтвердите, если посылка уже у вас.
+                          Курьер отметил доставку. Отправитель подтверждает сделку этой кнопкой.
                         </p>
                       </div>
                     )}
