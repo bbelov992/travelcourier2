@@ -2,6 +2,10 @@ import ActiveOrderCard from "./ActiveOrderCard"
 import OrderCard from "./OrderCard"
 import { redirect } from "next/navigation"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import {
+  isActiveOrderStatus,
+  isFinishedOrderStatus,
+} from "@/lib/order-status"
 
 export const dynamic = "force-dynamic"
 
@@ -111,7 +115,6 @@ export default async function CourierPage() {
           "id, route_id, sender_id, sender_name, contact, description, weight, message, request_id, status"
         )
         .in("route_id", routeIds)
-        .eq("status", "active")
         .order("id", { ascending: false })
     : { data: [], error: null }
 
@@ -122,23 +125,22 @@ export default async function CourierPage() {
           .from("orders")
           .select("id, route_id, sender_id, request_id, status")
           .in("route_id", routeIds)
-          .eq("status", "active")
           .order("id", { ascending: false })
       : ordersWithFullPayload
 
   const rawOrders = (ordersResult.data ?? []) as ActiveOrder[]
-  const activeOrderRequestIds = new Set(
+  const orderRequestIds = new Set(
     rawOrders
       .map((order) => order.request_id)
       .filter((requestId): requestId is string => Boolean(requestId))
   )
-  const { data: linkedRequests } = activeOrderRequestIds.size
+  const { data: linkedRequests } = orderRequestIds.size
     ? await supabase
         .from("requests")
         .select(
           "id, route_id, sender_name, contact, description, weight, message"
         )
-        .in("id", [...activeOrderRequestIds])
+        .in("id", [...orderRequestIds])
     : { data: [] }
 
   const linkedRequestsById = Object.fromEntries(
@@ -182,10 +184,15 @@ export default async function CourierPage() {
               return true
             }
 
-            return !activeOrderRequestIds.has(request.id)
+            return !orderRequestIds.has(request.id)
           })
           const routeOrders = typedOrders.filter(
-            (order) => order.route_id === route.id
+            (order) =>
+              order.route_id === route.id && isActiveOrderStatus(order.status)
+          )
+          const routeFinishedOrders = typedOrders.filter(
+            (order) =>
+              order.route_id === route.id && isFinishedOrderStatus(order.status)
           )
 
           return (
@@ -224,6 +231,18 @@ export default async function CourierPage() {
                   <ActiveOrderCard key={order.id} order={order} />
                 ))}
               </div>
+
+              {routeFinishedOrders.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                    Завершенные заказы
+                  </h3>
+
+                  {routeFinishedOrders.map((order) => (
+                    <ActiveOrderCard key={order.id} order={order} />
+                  ))}
+                </div>
+              )}
             </div>
           )
         })}
