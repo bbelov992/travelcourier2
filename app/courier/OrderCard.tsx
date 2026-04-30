@@ -1,5 +1,6 @@
 "use client"
 
+import OrderStatusTimeline from "@/components/OrderStatusTimeline"
 import { supabase } from "@/lib/supabase"
 import { useState } from "react"
 
@@ -90,6 +91,7 @@ async function insertOrderWithFallbacks(order: Order) {
 
 export default function OrderCard({ order }: { order: Order }) {
   const [loading, setLoading] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   const handleAccept = async () => {
     setLoading(true)
@@ -136,91 +138,144 @@ export default function OrderCard({ order }: { order: Order }) {
   }
 
   return (
-    <div className="border rounded-xl p-4 mb-4 bg-white">
-      <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-sm text-gray-500">
-            Заявка #{String(order.id).slice(0, 8)}
-          </p>
-          <p className="font-medium text-black">
-            Статус: {statusLabels[order.status] ?? order.status}
-          </p>
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="mb-3 w-full rounded-xl border border-gray-100 bg-white p-4 text-left shadow-sm transition hover:border-blue-100 hover:bg-blue-50"
+      >
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm text-gray-500">
+              Заявка #{String(order.id).slice(0, 8)}
+            </p>
+            <p className="mt-1 truncate font-medium text-black">
+              {order.sender_name || "Отправитель не указан"}
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              {order.weight ? `${order.weight} кг` : "Вес не указан"}
+            </p>
+          </div>
+
+          <span className="inline-flex w-fit rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
+            {statusLabels[order.status] ?? order.status}
+          </span>
         </div>
-      </div>
+      </button>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-xl bg-gray-50 p-3">
-          <p className="text-sm text-gray-500">Отправитель</p>
-          <p className="mt-1 text-black">{order.sender_name || "Не указан"}</p>
-        </div>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm text-gray-500">
+                  Заявка #{String(order.id).slice(0, 8)}
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold text-black">
+                  Заявка на доставку
+                </h2>
+              </div>
 
-        <div className="rounded-xl bg-gray-50 p-3">
-          <p className="text-sm text-gray-500">Контакт</p>
-          <p className="mt-1 text-black">
-            {order.status === "pending"
-              ? "Скрыт до принятия заявки"
-              : order.contact || "Не указан"}
-          </p>
-        </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="rounded-full border border-gray-200 px-3 py-1 text-xl leading-none text-gray-500 transition hover:text-black"
+                aria-label="Закрыть"
+              >
+                ×
+              </button>
+            </div>
 
-        <div className="rounded-xl bg-gray-50 p-3">
-          <p className="text-sm text-gray-500">Вес</p>
-          <p className="mt-1 text-black">
-            {order.weight ? `${order.weight} кг` : "Не указан"}
-          </p>
-        </div>
+            {order.status === "accepted" && (
+              <div className="mb-5">
+                <OrderStatusTimeline status="active" />
+              </div>
+            )}
 
-        <div className="rounded-xl bg-gray-50 p-3">
-          <p className="text-sm text-gray-500">ID отправителя</p>
-          <p className="mt-1 break-all text-black">{order.sender_id}</p>
-        </div>
-      </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-sm text-gray-500">Отправитель</p>
+                <p className="mt-1 text-black">
+                  {order.sender_name || "Не указан"}
+                </p>
+              </div>
 
-      <div className="mt-3 rounded-xl bg-gray-50 p-3">
-        <p className="text-sm text-gray-500">Описание посылки</p>
-        <p className="mt-1 text-black">
-          {order.description || "Описание не добавлено"}
-        </p>
-      </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-sm text-gray-500">Контакт</p>
+                <p className="mt-1 text-black">
+                  {order.status === "pending"
+                    ? "Скрыт до принятия заявки"
+                    : order.contact || "Не указан"}
+                </p>
+              </div>
 
-      <div className="mt-3 rounded-xl bg-gray-50 p-3">
-        <p className="text-sm text-gray-500">Комментарий</p>
-        <p className="mt-1 text-black">
-          {order.message || "Комментарий не добавлен"}
-        </p>
-      </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-sm text-gray-500">Вес</p>
+                <p className="mt-1 text-black">
+                  {order.weight ? `${order.weight} кг` : "Не указан"}
+                </p>
+              </div>
 
-      {order.status === "pending" && (
-        <div className="mt-4 flex gap-3">
-          <button
-            onClick={handleAccept}
-            disabled={loading}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:opacity-90"
-          >
-            Принять
-          </button>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-sm text-gray-500">ID отправителя</p>
+                <p className="mt-1 break-all text-black">{order.sender_id}</p>
+              </div>
+            </div>
 
-          <button
-            onClick={handleReject}
-            disabled={loading}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:opacity-90"
-          >
-            Отклонить
-          </button>
+            <div className="mt-3 rounded-xl bg-gray-50 p-3">
+              <p className="text-sm text-gray-500">Описание посылки</p>
+              <p className="mt-1 text-black">
+                {order.description || "Описание не добавлено"}
+              </p>
+            </div>
+
+            <div className="mt-3 rounded-xl bg-gray-50 p-3">
+              <p className="text-sm text-gray-500">Комментарий</p>
+              <p className="mt-1 text-black">
+                {order.message || "Комментарий не добавлен"}
+              </p>
+            </div>
+
+            <div className="mt-5 border-t border-gray-100 pt-4">
+              {order.status === "pending" && (
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={handleAccept}
+                    disabled={loading}
+                    className="rounded-xl bg-green-600 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+                  >
+                    Принять заявку
+                  </button>
+
+                  <button
+                    onClick={handleReject}
+                    disabled={loading}
+                    className="rounded-xl bg-red-600 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+                  >
+                    Отклонить
+                  </button>
+                </div>
+              )}
+
+              {order.status === "accepted" && (
+                <div className="rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+                  Заявка принята и перенесена в активные заказы.
+                </div>
+              )}
+
+              {order.status === "rejected" && (
+                <div className="rounded-xl bg-rose-50 p-4 text-sm font-medium text-rose-700">
+                  Заявка отклонена.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
-
-      {order.status === "accepted" && (
-        <div className="mt-4 text-sm font-medium text-emerald-700">
-          Заявка уже принята и перенесена в активные заказы.
-        </div>
-      )}
-
-      {order.status === "rejected" && (
-        <div className="mt-3 text-red-600 font-medium">
-          Отклонено
-        </div>
-      )}
-    </div>
+    </>
   )
 }

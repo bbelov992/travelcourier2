@@ -3,13 +3,14 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import OrderStatusTimeline from "@/components/OrderStatusTimeline"
+import {
+  SenderOrderCard,
+  SenderRequestCard,
+} from "./SenderDeliveryCards"
 import { supabase } from "@/lib/supabase"
 import {
   isActiveOrderStatus,
   isFinishedOrderStatus,
-  ORDER_STATUS_BADGE_STYLES,
-  ORDER_STATUS_LABELS,
 } from "@/lib/order-status"
 
 type SenderRequest = {
@@ -43,18 +44,6 @@ type RouteSummary = {
   to_city: string | null
   courier_name: string | null
   departure_date: string | null
-}
-
-const statusLabels: Record<string, string> = {
-  pending: "Ожидает решения",
-  accepted: "Принята курьером",
-  rejected: "Отклонена",
-}
-
-const statusStyles: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  accepted: "bg-emerald-100 text-emerald-800",
-  rejected: "bg-rose-100 text-rose-800",
 }
 
 function isSchemaMismatchError(error: { code?: string; message?: string } | null) {
@@ -382,109 +371,20 @@ export default function SenderPage() {
               Активные доставки
             </h2>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {activeOrders.map((order) => {
                 const route = order.route_id ? routesById[order.route_id] : undefined
 
                 return (
-                  <div
+                  <SenderOrderCard
                     key={order.id}
-                    className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6 shadow-sm"
-                  >
-                    <div className="mb-4">
-                      <OrderStatusTimeline status={order.status} />
-                    </div>
-
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h3 className="text-xl font-semibold text-black">
-                          {route
-                            ? `${route.from_city ?? "—"} → ${route.to_city ?? "—"}`
-                            : "Маршрут больше недоступен"}
-                        </h3>
-
-                        <p className="mt-1 text-sm text-emerald-700">
-                          {ORDER_STATUS_LABELS[order.status ?? ""] ?? "Заказ в работе"}
-                        </p>
-                      </div>
-
-                      <span
-                        className={`inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ${
-                          ORDER_STATUS_BADGE_STYLES[order.status ?? ""] ??
-                          "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {ORDER_STATUS_LABELS[order.status ?? ""] ?? "В работе"}
-                      </span>
-                    </div>
-
-                    <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                      <div className="rounded-xl bg-white p-4">
-                        <p className="text-sm text-gray-500">Курьер</p>
-                        <p className="mt-1 font-medium text-black">
-                          {route?.courier_name ?? "—"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-white p-4">
-                        <p className="text-sm text-gray-500">Дата вылета</p>
-                        <p className="mt-1 font-medium text-black">
-                          {route?.departure_date
-                            ? new Date(route.departure_date).toLocaleDateString(
-                                "ru-RU"
-                              )
-                            : "—"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-white p-4">
-                        <p className="text-sm text-gray-500">Контакт</p>
-                        <p className="mt-1 text-black">
-                          {order.contact || "Не указан"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-white p-4">
-                        <p className="text-sm text-gray-500">Вес</p>
-                        <p className="mt-1 font-medium text-black">
-                          {order.weight ? `${order.weight} кг` : "Не указан"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-xl bg-white p-4">
-                      <p className="text-sm text-gray-500">Описание посылки</p>
-                      <p className="mt-1 text-black">
-                        {order.description || "Описание не добавлено"}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 rounded-xl bg-white p-4">
-                      <p className="text-sm text-gray-500">Комментарий</p>
-                      <p className="mt-1 text-black">
-                        {order.message || "Комментарий не добавлен"}
-                      </p>
-                    </div>
-
-                    {order.status === "completion_requested" && (
-                      <div className="mt-4 flex flex-wrap items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void handleOrderStatusUpdate(order.id, "completed")
-                          }
-                          disabled={updatingOrderId === order.id}
-                          className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
-                        >
-                          Получил посылку
-                        </button>
-
-                        <p className="text-sm text-amber-800">
-                          Курьер отметил доставку. Отправитель подтверждает сделку этой кнопкой.
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                    order={order}
+                    route={route}
+                    updating={updatingOrderId === order.id}
+                    onConfirm={(orderId) =>
+                      void handleOrderStatusUpdate(orderId, "completed")
+                    }
+                  />
                 )
               })}
             </div>
@@ -497,76 +397,21 @@ export default function SenderPage() {
               Завершенные доставки
             </h2>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {finishedOrders.map((order) => {
                 const route = order.route_id ? routesById[order.route_id] : undefined
 
                 return (
-                  <div
+                  <SenderOrderCard
                     key={order.id}
-                    className="rounded-2xl bg-white p-6 shadow-sm"
-                  >
-                    <div className="mb-4">
-                      <OrderStatusTimeline status={order.status} />
-                    </div>
-
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h3 className="text-xl font-semibold text-black">
-                          {route
-                            ? `${route.from_city ?? "—"} → ${route.to_city ?? "—"}`
-                            : "Маршрут больше недоступен"}
-                        </h3>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                          {ORDER_STATUS_LABELS[order.status ?? ""] ?? "Завершено"}
-                        </p>
-                      </div>
-
-                      <span
-                        className={`inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ${
-                          ORDER_STATUS_BADGE_STYLES[order.status ?? ""] ??
-                          "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {ORDER_STATUS_LABELS[order.status ?? ""] ?? "Завершено"}
-                      </span>
-                    </div>
-
-                    <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Курьер</p>
-                        <p className="mt-1 font-medium text-black">
-                          {route?.courier_name ?? "—"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Дата вылета</p>
-                        <p className="mt-1 font-medium text-black">
-                          {route?.departure_date
-                            ? new Date(route.departure_date).toLocaleDateString(
-                                "ru-RU"
-                              )
-                            : "—"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Контакт</p>
-                        <p className="mt-1 text-black">
-                          {order.contact || "Не указан"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Вес</p>
-                        <p className="mt-1 font-medium text-black">
-                          {order.weight ? `${order.weight} кг` : "Не указан"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                    order={order}
+                    route={route}
+                    updating={false}
+                    onConfirm={(orderId) =>
+                      void handleOrderStatusUpdate(orderId, "completed")
+                    }
+                    finished
+                  />
                 )
               })}
             </div>
@@ -579,111 +424,19 @@ export default function SenderPage() {
               Заявки
             </h2>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {visibleRequests.map((request) => {
                 const route = request.route_id
                   ? routesById[request.route_id]
                   : undefined
-                const statusLabel = request.status
-                  ? statusLabels[request.status] ?? request.status
-                  : "Неизвестно"
-                const statusStyle = request.status
-                  ? statusStyles[request.status] ?? "bg-gray-100 text-gray-700"
-                  : "bg-gray-100 text-gray-700"
 
                 return (
-                  <div
+                  <SenderRequestCard
                     key={request.id}
-                    className="rounded-2xl bg-white p-6 shadow-sm"
-                  >
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h2 className="text-xl font-semibold text-black">
-                          {route
-                            ? `${route.from_city ?? "—"} → ${route.to_city ?? "—"}`
-                            : "Маршрут больше недоступен"}
-                        </h2>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                          Заявка #{String(request.id).slice(0, 8)}
-                        </p>
-                      </div>
-
-                      <span
-                        className={`inline-flex w-fit rounded-full px-3 py-1 text-sm font-medium ${statusStyle}`}
-                      >
-                        {statusLabel}
-                      </span>
-                    </div>
-
-                    <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Курьер</p>
-                        <p className="mt-1 font-medium text-black">
-                          {route?.courier_name ?? "—"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Дата вылета</p>
-                        <p className="mt-1 font-medium text-black">
-                          {route?.departure_date
-                            ? new Date(route.departure_date).toLocaleDateString(
-                                "ru-RU"
-                              )
-                            : "—"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Вес</p>
-                        <p className="mt-1 font-medium text-black">
-                          {request.weight ? `${request.weight} кг` : "Не указан"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Отправлена</p>
-                        <p className="mt-1 font-medium text-black">
-                          {request.created_at
-                            ? new Date(request.created_at).toLocaleDateString(
-                                "ru-RU"
-                              )
-                            : "—"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-4 md:grid-cols-2">
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Контакт</p>
-                        <p className="mt-1 text-black">
-                          {request.contact || "Не указан"}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-gray-50 p-4">
-                        <p className="text-sm text-gray-500">Имя в заявке</p>
-                        <p className="mt-1 text-black">
-                          {request.sender_name || profileName || "—"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-xl bg-gray-50 p-4">
-                      <p className="text-sm text-gray-500">Описание посылки</p>
-                      <p className="mt-1 text-black">
-                        {request.description || "Описание не добавлено"}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 rounded-xl bg-gray-50 p-4">
-                      <p className="text-sm text-gray-500">Комментарий</p>
-                      <p className="mt-1 text-black">
-                        {request.message || "Комментарий не добавлен"}
-                      </p>
-                    </div>
-                  </div>
+                    request={request}
+                    route={route}
+                    profileName={profileName}
+                  />
                 )
               })}
             </div>
