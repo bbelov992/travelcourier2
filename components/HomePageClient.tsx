@@ -7,9 +7,18 @@ type RouteCard = {
   id: string
   from_city: string
   to_city: string
+  courier_id: string | null
   courier_name: string | null
   max_weight: number | null
   departure_date: string | null
+  departure_time?: string | null
+  transport_type?: string | null
+  price_amount?: number | null
+  price_currency?: string | null
+  courier_comment?: string | null
+  courier_rating?: number | null
+  courier_completed_deliveries?: number | null
+  courier_is_verified?: boolean | null
 }
 
 type ViewerRole = "sender" | "courier" | null
@@ -42,12 +51,40 @@ const courierBenefits = [
   },
 ]
 
+const transportLabels: Record<string, string> = {
+  plane: "Самолет",
+  train: "Поезд",
+  car: "Авто",
+  bus: "Автобус",
+  other: "Другое",
+}
+
 function formatDepartureDate(date: string | null) {
   if (!date) {
     return "Дата не указана"
   }
 
   return new Date(date).toLocaleDateString("ru-RU")
+}
+
+function formatPrice(route: RouteCard) {
+  if (route.price_amount === null || route.price_amount === undefined) {
+    return "Цена договорная"
+  }
+
+  return `${route.price_amount} ${route.price_currency || "EUR"}`
+}
+
+function formatDepartureTime(time: string | null | undefined) {
+  if (!time) {
+    return null
+  }
+
+  return time.slice(0, 5)
+}
+
+function getTransportLabel(transportType: string | null | undefined) {
+  return transportType ? transportLabels[transportType] ?? transportType : "Другое"
 }
 
 export default function HomePageClient({
@@ -292,12 +329,47 @@ export default function HomePageClient({
                       <p className="text-xl font-semibold text-[#0f172f] sm:text-2xl">
                         {route.from_city} → {route.to_city}
                       </p>
+
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium text-[#405072]">
+                        <span className="rounded-full bg-[#eef3ff] px-3 py-1">
+                          {getTransportLabel(route.transport_type)}
+                        </span>
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-800">
+                          {formatPrice(route)}
+                        </span>
+                        {route.courier_rating !== null &&
+                          route.courier_rating !== undefined &&
+                          route.courier_rating > 0 && (
+                            <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800">
+                              Рейтинг {route.courier_rating}
+                            </span>
+                          )}
+                        {route.courier_is_verified && (
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-800">
+                            Проверен
+                          </span>
+                        )}
+                      </div>
+
+                      {route.courier_comment && (
+                        <p className="mt-2 line-clamp-2 text-sm text-[#5a6a93]">
+                          {route.courier_comment}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#0f172f] md:min-w-[240px] md:justify-end">
-                      <p>{formatDepartureDate(route.departure_date)}</p>
+                      <p>
+                        {formatDepartureDate(route.departure_date)}
+                        {formatDepartureTime(route.departure_time)
+                          ? `, ${formatDepartureTime(route.departure_time)}`
+                          : ""}
+                      </p>
                       <p>{route.courier_name || "Не указан"}</p>
                       <p>{route.max_weight ? `${route.max_weight} кг` : "Не указан"}</p>
+                      {route.courier_completed_deliveries ? (
+                        <p>{route.courier_completed_deliveries} доставок</p>
+                      ) : null}
                     </div>
 
                     <Link
@@ -415,6 +487,12 @@ export default function HomePageClient({
                       </p>
                       <p className="mt-1 text-sm text-[#5a6a93]">
                         Вес: {route.max_weight ? `${route.max_weight} кг` : "Не указан"}
+                      </p>
+                      <p className="mt-1 text-sm text-[#5a6a93]">
+                        Цена: {formatPrice(route)}
+                      </p>
+                      <p className="mt-1 text-sm text-[#5a6a93]">
+                        Транспорт: {getTransportLabel(route.transport_type)}
                       </p>
                     </div>
                   ))}

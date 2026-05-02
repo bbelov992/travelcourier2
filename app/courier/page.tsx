@@ -214,7 +214,7 @@ export default async function CourierPage() {
                 )}
 
                 {routeRequests.map((request) => (
-                  <OrderCard key={request.id} order={request} />
+                  <OrderCard key={request.id} order={request} courierId={user.id} />
                 ))}
               </div>
 

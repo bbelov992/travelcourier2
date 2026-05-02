@@ -39,6 +39,14 @@ export default function CreateRoutePage() {
     const max_weight = Number(formData.get("max_weight"))
     const courier_name = formData.get("courier_name") as string
     const departure_date = formData.get("departure_date") as string
+    const departure_time = (formData.get("departure_time") as string) || null
+    const transport_type = formData.get("transport_type") as string
+    const price_amount = formData.get("price_amount")
+      ? Number(formData.get("price_amount"))
+      : null
+    const price_currency = (formData.get("price_currency") as string) || "EUR"
+    const courier_comment =
+      ((formData.get("courier_comment") as string) || "").trim() || null
 
     const { error } = await supabase.from("routes").insert([
       {
@@ -47,6 +55,11 @@ export default function CreateRoutePage() {
         max_weight,
         courier_name,
         departure_date,
+        departure_time,
+        transport_type,
+        price_amount,
+        price_currency,
+        courier_comment,
         courier_id: user.id,
       },
     ])
@@ -104,6 +117,52 @@ export default function CreateRoutePage() {
             name="departure_date"
             required
             className="w-full border rounded-xl px-4 py-2 text-black"
+          />
+
+          <input
+            type="time"
+            name="departure_time"
+            className="w-full border rounded-xl px-4 py-2 text-black"
+          />
+
+          <select
+            name="transport_type"
+            defaultValue="other"
+            className="w-full border rounded-xl px-4 py-2 text-black"
+          >
+            <option value="plane">Самолет</option>
+            <option value="train">Поезд</option>
+            <option value="car">Авто</option>
+            <option value="bus">Автобус</option>
+            <option value="other">Другое</option>
+          </select>
+
+          <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+            <input
+              type="number"
+              name="price_amount"
+              min="0"
+              step="0.01"
+              className="w-full border rounded-xl px-4 py-2 text-black"
+              placeholder="Цена"
+            />
+
+            <select
+              name="price_currency"
+              defaultValue="EUR"
+              className="w-full border rounded-xl px-4 py-2 text-black"
+            >
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="RUB">RUB</option>
+            </select>
+          </div>
+
+          <textarea
+            name="courier_comment"
+            className="w-full border rounded-xl px-4 py-2 text-black"
+            placeholder="Комментарий для отправителей"
+            rows={4}
           />
 
           <button

@@ -36,11 +36,12 @@ function isSchemaMismatchError(error: { code?: string; message?: string } | null
   )
 }
 
-async function insertOrderWithFallbacks(order: Order) {
+async function insertOrderWithFallbacks(order: Order, courierId: string) {
   const payloads = [
     {
       route_id: order.route_id,
       sender_id: order.sender_id,
+      courier_id: courierId,
       sender_name: order.sender_name ?? null,
       contact: order.contact ?? null,
       description: order.description ?? null,
@@ -52,6 +53,7 @@ async function insertOrderWithFallbacks(order: Order) {
     {
       route_id: order.route_id,
       sender_id: order.sender_id,
+      courier_id: courierId,
       description: order.description ?? null,
       message: order.message ?? null,
       status: "active",
@@ -60,12 +62,14 @@ async function insertOrderWithFallbacks(order: Order) {
     {
       route_id: order.route_id,
       sender_id: order.sender_id,
+      courier_id: courierId,
       status: "active",
       request_id: order.id,
     },
     {
       route_id: order.route_id,
       sender_id: order.sender_id,
+      courier_id: courierId,
       status: "active",
     },
   ]
@@ -89,7 +93,13 @@ async function insertOrderWithFallbacks(order: Order) {
   return lastError
 }
 
-export default function OrderCard({ order }: { order: Order }) {
+export default function OrderCard({
+  order,
+  courierId,
+}: {
+  order: Order
+  courierId: string
+}) {
   const [loading, setLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
 
@@ -109,7 +119,7 @@ export default function OrderCard({ order }: { order: Order }) {
     }
 
     // 2. Create order record
-    const orderError = await insertOrderWithFallbacks(order)
+    const orderError = await insertOrderWithFallbacks(order, courierId)
 
     if (orderError) {
       alert("Ошибка создания ордера: " + orderError.message)

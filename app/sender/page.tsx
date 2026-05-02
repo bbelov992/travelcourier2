@@ -29,6 +29,8 @@ type SenderOrder = {
   id: string
   route_id: string | null
   request_id?: string | null
+  courier_id?: string | null
+  sender_id?: string | null
   sender_name?: string | null
   contact?: string | null
   description?: string | null
@@ -42,6 +44,7 @@ type RouteSummary = {
   id: string
   from_city: string | null
   to_city: string | null
+  courier_id?: string | null
   courier_name: string | null
   departure_date: string | null
 }
@@ -66,6 +69,9 @@ export default function SenderPage() {
   const [requests, setRequests] = useState<SenderRequest[]>([])
   const [orders, setOrders] = useState<SenderOrder[]>([])
   const [routesById, setRoutesById] = useState<Record<string, RouteSummary>>({})
+  const [reviewedOrderIds, setReviewedOrderIds] = useState<Set<string>>(
+    () => new Set()
+  )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
@@ -166,6 +172,30 @@ export default function SenderPage() {
       setOrders(nextOrders)
       setError(null)
 
+      const completedOrderIds = nextOrders
+        .filter((order) => order.status === "completed")
+        .map((order) => order.id)
+
+      if (completedOrderIds.length > 0) {
+        const { data: reviewRows } = await supabase
+          .from("reviews")
+          .select("order_id")
+          .eq("sender_id", senderId)
+          .in("order_id", completedOrderIds)
+
+        if (!cancelled) {
+          setReviewedOrderIds(
+            new Set(
+              ((reviewRows ?? []) as Array<{ order_id: string }>).map(
+                (review) => review.order_id
+              )
+            )
+          )
+        }
+      } else {
+        setReviewedOrderIds(new Set())
+      }
+
       const routeIds = [
         ...new Set(
           [...nextRequests, ...nextOrders]
@@ -182,7 +212,7 @@ export default function SenderPage() {
 
       const { data: routeRows } = await supabase
         .from("routes")
-        .select("id, from_city, to_city, courier_name, departure_date")
+        .select("id, from_city, to_city, courier_id, courier_name, departure_date")
         .in("id", routeIds)
 
       if (cancelled) {
@@ -294,6 +324,10 @@ export default function SenderPage() {
     setUpdatingOrderId(null)
   }
 
+  const handleReviewSubmitted = (orderId: string) => {
+    setReviewedOrderIds((currentIds) => new Set(currentIds).add(orderId))
+  }
+
   const activeOrders = orders.filter((order) => isActiveOrderStatus(order.status))
   const finishedOrders = orders.filter((order) =>
     isFinishedOrderStatus(order.status)
@@ -384,6 +418,8 @@ export default function SenderPage() {
                     onConfirm={(orderId) =>
                       void handleOrderStatusUpdate(orderId, "completed")
                     }
+                    reviewSubmitted={reviewedOrderIds.has(order.id)}
+                    onReviewSubmitted={handleReviewSubmitted}
                   />
                 )
               })}
@@ -410,6 +446,8 @@ export default function SenderPage() {
                     onConfirm={(orderId) =>
                       void handleOrderStatusUpdate(orderId, "completed")
                     }
+                    reviewSubmitted={reviewedOrderIds.has(order.id)}
+                    onReviewSubmitted={handleReviewSubmitted}
                     finished
                   />
                 )

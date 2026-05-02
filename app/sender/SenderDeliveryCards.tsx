@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { type FormEvent, useState } from "react"
 import OrderStatusTimeline from "@/components/OrderStatusTimeline"
+import { supabase } from "@/lib/supabase"
 import {
   ORDER_STATUS_BADGE_STYLES,
   ORDER_STATUS_LABELS,
@@ -23,6 +24,8 @@ type SenderOrder = {
   id: string
   route_id: string | null
   request_id?: string | null
+  courier_id?: string | null
+  sender_id?: string | null
   sender_name?: string | null
   contact?: string | null
   description?: string | null
@@ -36,6 +39,7 @@ type RouteSummary = {
   id: string
   from_city: string | null
   to_city: string | null
+  courier_id?: string | null
   courier_name: string | null
   departure_date: string | null
 }
@@ -82,18 +86,59 @@ export function SenderOrderCard({
   route,
   updating,
   onConfirm,
+  reviewSubmitted,
+  onReviewSubmitted,
   finished = false,
 }: {
   order: SenderOrder
   route: RouteSummary | undefined
   updating: boolean
   onConfirm: (orderId: string) => void
+  reviewSubmitted?: boolean
+  onReviewSubmitted?: (orderId: string) => void
   finished?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [rating, setRating] = useState("5")
+  const [reviewComment, setReviewComment] = useState("")
+  const [reviewLoading, setReviewLoading] = useState(false)
+  const [reviewError, setReviewError] = useState<string | null>(null)
+  const [localReviewSubmitted, setLocalReviewSubmitted] = useState(false)
   const statusLabel = ORDER_STATUS_LABELS[order.status ?? ""] ?? "В работе"
   const statusStyle =
     ORDER_STATUS_BADGE_STYLES[order.status ?? ""] ?? "bg-gray-100 text-gray-700"
+  const hasReview = Boolean(reviewSubmitted || localReviewSubmitted)
+  const courierId = order.courier_id ?? route?.courier_id ?? null
+
+  const handleReviewSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!courierId || !order.sender_id) {
+      setReviewError("Не хватает данных курьера или отправителя для отзыва.")
+      return
+    }
+
+    setReviewLoading(true)
+    setReviewError(null)
+
+    const { error } = await supabase.from("reviews").insert({
+      order_id: order.id,
+      courier_id: courierId,
+      sender_id: order.sender_id,
+      rating: Number(rating),
+      comment: reviewComment.trim() || null,
+    })
+
+    if (error) {
+      setReviewError("Не удалось сохранить отзыв: " + error.message)
+      setReviewLoading(false)
+      return
+    }
+
+    setLocalReviewSubmitted(true)
+    onReviewSubmitted?.(order.id)
+    setReviewLoading(false)
+  }
 
   return (
     <>
@@ -199,6 +244,54 @@ export function SenderOrderCard({
               {order.status === "completed" && (
                 <div className="rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
                   Доставка подтверждена и завершена.
+                </div>
+              )}
+
+              {order.status === "completed" && !hasReview && (
+                <form
+                  onSubmit={handleReviewSubmit}
+                  className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4"
+                >
+                  <p className="font-medium text-black">Оцените курьера</p>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-[140px_1fr]">
+                    <select
+                      value={rating}
+                      onChange={(event) => setRating(event.target.value)}
+                      className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-black"
+                    >
+                      <option value="5">5</option>
+                      <option value="4">4</option>
+                      <option value="3">3</option>
+                      <option value="2">2</option>
+                      <option value="1">1</option>
+                    </select>
+
+                    <input
+                      value={reviewComment}
+                      onChange={(event) => setReviewComment(event.target.value)}
+                      className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-black"
+                      placeholder="Комментарий к доставке"
+                    />
+                  </div>
+
+                  {reviewError && (
+                    <p className="mt-3 text-sm text-rose-700">{reviewError}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={reviewLoading}
+                    className="mt-3 rounded-xl bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+                  >
+                    {reviewLoading ? "Сохраняем..." : "Оставить отзыв"}
+                  </button>
+                </form>
+              )}
+
+              {order.status === "completed" && hasReview && (
+                <div className="mt-4 rounded-xl bg-blue-50 p-4 text-sm font-medium text-blue-800">
+                  Отзыв уже сохранен. Спасибо за оценку.
                 </div>
               )}
             </div>
