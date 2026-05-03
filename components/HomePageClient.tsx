@@ -277,6 +277,26 @@ export default function HomePageClient({
                 </button>
               </div>
             </form>
+
+            {mode === "courier" && (
+              <div className="mt-5 rounded-[30px] bg-[#0f172f] p-5 text-white shadow-[0_24px_60px_rgba(15,23,47,0.18)] sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-6">
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-white/55">
+                    Создай свой маршрут
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold">
+                    Опубликуйте поездку и принимайте заявки
+                  </h2>
+                </div>
+
+                <Link
+                  href={viewerRole === "courier" ? "/create-route" : "/signup"}
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-medium text-[#0f172f] transition hover:bg-[#eef3ff] sm:mt-0 sm:w-auto"
+                >
+                  Создать маршрут
+                </Link>
+              </div>
+            )}
           </div>
         </section>
 

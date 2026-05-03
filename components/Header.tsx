@@ -14,8 +14,22 @@ export default async function Header() {
 
   const supabase = await createSupabaseServerClient()
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle()
+    : { data: null }
+  const profileHref =
+    profile?.role === "courier"
+      ? "/courier"
+      : profile?.role === "sender"
+        ? "/sender"
+        : "/dashboard"
 
   return (
     <header className="border-b border-white/15 bg-[#2e6bff] px-6 py-4 text-white shadow-[0_18px_40px_rgba(46,107,255,0.18)]">
@@ -25,10 +39,10 @@ export default async function Header() {
         </div>
 
         <div className="flex gap-3">
-          {session ? (
+          {user ? (
             <>
               <Link
-                href="/dashboard"
+                href={profileHref}
                 className="rounded-xl bg-white px-4 py-2 font-medium text-[#16357f] transition hover:bg-[#eef3ff]"
               >
                 Мой профиль

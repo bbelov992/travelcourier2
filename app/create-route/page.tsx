@@ -1,31 +1,11 @@
-import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
 
 export default function CreateRoutePage() {
   async function createRoute(formData: FormData) {
     "use server"
 
-    const cookieStore = await cookies()
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: CookieOptionsWithName) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: CookieOptionsWithName) {
-            cookieStore.set({ name, value: "", ...options })
-          },
-        },
-      }
-    )
-
+    const supabase = await createSupabaseServerClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -34,10 +14,20 @@ export default function CreateRoutePage() {
       redirect("/login")
     }
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, full_name")
+      .eq("id", user.id)
+      .maybeSingle()
+
+    if (profile?.role !== "courier") {
+      redirect("/")
+    }
+
     const from_city = formData.get("from_city") as string
     const to_city = formData.get("to_city") as string
     const max_weight = Number(formData.get("max_weight"))
-    const courier_name = formData.get("courier_name") as string
+    const courier_name = profile.full_name?.trim() || user.email || "Курьер"
     const departure_date = formData.get("departure_date") as string
     const departure_time = (formData.get("departure_time") as string) || null
     const transport_type = formData.get("transport_type") as string
@@ -102,14 +92,6 @@ export default function CreateRoutePage() {
             required
             className="w-full border rounded-xl px-4 py-2 text-black"
             placeholder="Вес"
-          />
-
-          <input
-            type="text"
-            name="courier_name"
-            required
-            className="w-full border rounded-xl px-4 py-2 text-black"
-            placeholder="Имя"
           />
 
           <input
