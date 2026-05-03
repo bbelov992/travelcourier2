@@ -169,6 +169,36 @@ create index if not exists reviews_courier_id_idx
 create index if not exists reviews_sender_id_idx
   on public.reviews (sender_id);
 
+alter table public.reviews enable row level security;
+
+drop policy if exists reviews_select_own on public.reviews;
+drop policy if exists reviews_insert_completed_sender_order on public.reviews;
+
+create policy reviews_select_own
+on public.reviews
+for select
+to authenticated
+using (
+  sender_id = auth.uid()
+  or courier_id = auth.uid()
+);
+
+create policy reviews_insert_completed_sender_order
+on public.reviews
+for insert
+to authenticated
+with check (
+  sender_id = auth.uid()
+  and exists (
+    select 1
+    from public.orders
+    where orders.id = reviews.order_id
+      and orders.sender_id = auth.uid()
+      and orders.courier_id = reviews.courier_id
+      and orders.status = 'completed'
+  )
+);
+
 create or replace function public.refresh_courier_rating(target_courier_id uuid)
 returns void
 language plpgsql
