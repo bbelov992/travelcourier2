@@ -108,25 +108,22 @@ export function SenderOrderCard({
   const statusStyle =
     ORDER_STATUS_BADGE_STYLES[order.status ?? ""] ?? "bg-gray-100 text-gray-700"
   const hasReview = Boolean(reviewSubmitted || localReviewSubmitted)
-  const courierId = order.courier_id ?? route?.courier_id ?? null
 
   const handleReviewSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!courierId || !order.sender_id) {
-      setReviewError("Не хватает данных курьера или отправителя для отзыва.")
+    if (!order.sender_id) {
+      setReviewError("Не хватает данных отправителя для отзыва.")
       return
     }
 
     setReviewLoading(true)
     setReviewError(null)
 
-    const { error } = await supabase.from("reviews").insert({
-      order_id: order.id,
-      courier_id: courierId,
-      sender_id: order.sender_id,
-      rating: Number(rating),
-      comment: reviewComment.trim() || null,
+    const { error } = await supabase.rpc("submit_order_review", {
+      review_order_id: order.id,
+      review_rating: Number(rating),
+      review_comment: reviewComment.trim() || null,
     })
 
     if (error) {
