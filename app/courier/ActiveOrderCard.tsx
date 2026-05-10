@@ -18,6 +18,19 @@ type ActiveOrder = {
   weight?: number | null
   message?: string | null
   status: string
+  review?: OrderReview | null
+}
+
+type OrderReview = {
+  id: string
+  order_id: string
+  rating: number
+  comment: string | null
+  created_at: string | null
+}
+
+function formatDate(date: string | null | undefined) {
+  return date ? new Date(date).toLocaleDateString("ru-RU") : "Дата не указана"
 }
 
 export default function ActiveOrderCard({ order }: { order: ActiveOrder }) {
@@ -63,6 +76,11 @@ export default function ActiveOrderCard({ order }: { order: ActiveOrder }) {
             <p className="mt-1 text-sm text-gray-500">
               {order.weight ? `${order.weight} кг` : "Вес не указан"}
             </p>
+            {order.review && (
+              <p className="mt-1 text-sm font-medium text-amber-700">
+                Отзыв: {order.review.rating}/5
+              </p>
+            )}
           </div>
 
           <span
@@ -177,6 +195,31 @@ export default function ActiveOrderCard({ order }: { order: ActiveOrder }) {
               {order.status === "completed" && (
                 <div className="rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
                   Заказ подтвержден отправителем и завершен.
+                </div>
+              )}
+
+              {order.status === "completed" && order.review && (
+                <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="font-medium text-black">Отзыв отправителя</p>
+                    <span className="w-fit rounded-full bg-white px-3 py-1 text-sm font-medium text-amber-800">
+                      {order.review.rating}/5
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-sm text-amber-900">
+                    {formatDate(order.review.created_at)}
+                  </p>
+
+                  <p className="mt-3 text-black">
+                    {order.review.comment || "Отзыв без комментария"}
+                  </p>
+                </div>
+              )}
+
+              {order.status === "completed" && !order.review && (
+                <div className="mt-4 rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
+                  Отправитель пока не оставил отзыв к этому заказу.
                 </div>
               )}
             </div>

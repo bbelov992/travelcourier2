@@ -385,7 +385,16 @@ export default function HomePageClient({
                           ? `, ${formatDepartureTime(route.departure_time)}`
                           : ""}
                       </p>
-                      <p>{route.courier_name || "Не указан"}</p>
+                      {route.courier_id ? (
+                        <Link
+                          href={`/courier/${route.courier_id}`}
+                          className="font-medium text-[#1d47b7] transition hover:text-[#0f172f]"
+                        >
+                          {route.courier_name || "Профиль курьера"}
+                        </Link>
+                      ) : (
+                        <p>{route.courier_name || "Не указан"}</p>
+                      )}
                       <p>{route.max_weight ? `${route.max_weight} кг` : "Не указан"}</p>
                       {route.courier_completed_deliveries ? (
                         <p>{route.courier_completed_deliveries} доставок</p>
@@ -500,7 +509,17 @@ export default function HomePageClient({
                         {route.from_city} → {route.to_city}
                       </p>
                       <p className="mt-3 text-sm text-[#5a6a93]">
-                        Курьер: {route.courier_name || "Не указан"}
+                        Курьер:{" "}
+                        {route.courier_id ? (
+                          <Link
+                            href={`/courier/${route.courier_id}`}
+                            className="font-medium text-[#1d47b7] transition hover:text-[#0f172f]"
+                          >
+                            {route.courier_name || "профиль"}
+                          </Link>
+                        ) : (
+                          route.courier_name || "Не указан"
+                        )}
                       </p>
                       <p className="mt-1 text-sm text-[#5a6a93]">
                         Дата: {formatDepartureDate(route.departure_date)}

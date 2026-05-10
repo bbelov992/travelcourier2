@@ -1,6 +1,6 @@
-import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 const transportLabels: Record<string, string> = {
   plane: "Самолет",
@@ -22,6 +22,7 @@ export default async function RoutePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const supabase = await createSupabaseServerClient()
 
   const { data: route, error } = await supabase
     .from('routes')
@@ -52,6 +53,17 @@ export default async function RoutePage({
           )}
           {route.courier_comment && (
             <p><strong>Комментарий:</strong> {route.courier_comment}</p>
+          )}
+          {route.courier_id && (
+            <p>
+              <strong>Курьер:</strong>{" "}
+              <Link
+                href={`/courier/${route.courier_id}`}
+                className="font-medium text-blue-700 hover:text-black"
+              >
+                {route.courier_name || "Профиль курьера"}
+              </Link>
+            </p>
           )}
         </div>
         <div className="mt-6">
